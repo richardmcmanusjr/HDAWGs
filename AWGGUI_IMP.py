@@ -1,4 +1,4 @@
-# img_viewer.py
+# AWGGUI_IMP.py
 
 import hdawg
 import time
@@ -87,7 +87,7 @@ def compute_sample_rate():
     if values["-SAMPLE RATE-"] == '100 MHz':
         print(values["-SAMPLE RATE-"])
         return 100e6
-    else:    
+    else:
         baseRate = 2.4e9
         return baseRate/(2**sampleRates.index(values["-SAMPLE RATE-"]))
 
@@ -274,7 +274,7 @@ while True:
                     primary_awgModule = hdawg.initiate_AWG(primary_daq, primary_device)
                 if secondary_device_id != 'None':
                     secondary_daq, secondary_device = hdawg.configure_api(secondary_device_id)
-                    if secondary_daq != None:                    
+                    if secondary_daq != None:
                         secondary_exp_setting = hdawg.generate_settings(secondary_device, array, sampleRate, use = 'secondary',
                             trigger = trigger, trigger_channel = trigger_channel, channel_grouping = channel_grouping)
                         hdawg.set_awg_settings(secondary_daq, secondary_exp_setting)
@@ -283,7 +283,7 @@ while True:
                             trigger = trigger, trigger_channel = trigger_channel, count = wave_count)
                         hdawg.run_awg_program(primary_daq, primary_device, primary_awgModule, mds_program)
                     else:
-                        primary_awg_program = hdawg.generate_awg_program(array, primary_awgModule, use = 'primary', 
+                        primary_awg_program = hdawg.generate_awg_program(array, primary_awgModule, use = 'primary',
                         trigger = trigger, trigger_channel = trigger_channel, count = wave_count)
                         hdawg.run_awg_program(primary_daq, primary_device, primary_awgModule, primary_awg_program)
                     window["-GENERATE-"].update('Stop!', button_color = 'white on red')
@@ -296,7 +296,7 @@ while True:
                 window["-GENERATION PROMPT-"].update('')
         #sg.popup('Error Generating Waveforms!', 'AWG with Device ID, ' + primary_device_id + ', did not connect.', 'Please Try Again.')
     elif event == "-FILE LIST-":  # A file was chosen from the listbox
-        if bool(values["-FILE LIST-"]):    
+        if bool(values["-FILE LIST-"]):
             filename = os.path.join(
                 values["-FOLDER-"], values["-FILE LIST-"][0]
             )
