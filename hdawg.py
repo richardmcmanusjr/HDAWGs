@@ -11,7 +11,7 @@ def configure_api(
 ):
     try:
         # Settings
-        apilevel_example = 6  # The API level supported by this example.
+        apilevel_example = 7  # The API level supported by this example.
         # Call a zhinst utility function that returns:
         # - an API session `daq` in order to communicate with devices via the data server.
         # - the device ID string that specifies the device branch in the server's node hierarchy.
