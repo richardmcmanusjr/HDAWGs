@@ -11,13 +11,13 @@ def configure_api(
 ):
     try:
         # Settings
-        apilevel_example = 7  # The API level supported by this example.
+        apilevel = 6  # The API level supported by this example.
         # Call a zhinst utility function that returns:
         # - an API session `daq` in order to communicate with devices via the data server.
         # - the device ID string that specifies the device branch in the server's node hierarchy.
         # - the device's discovery properties.
         (daq, device, _) = zhinst.utils.create_api_session(
-            device_id, apilevel_example, server_host=server_host, server_port=server_port
+            device_id, apilevel, server_host=server_host, server_port=server_port
         )
         zhinst.utils.api_server_version_check(daq)
 
