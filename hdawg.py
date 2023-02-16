@@ -154,11 +154,14 @@ def generate_awg_program(array, awgModule, use = 'primary', trigger = '4', trigg
 
     if trigger >= 0 and trigger < 4:
         if use == 'primary':
-            trigger_binary = "0b0000"
-            trigger_binary[6 - trigger_channel] = 1
+            trigger_binary = list('0b0000')
+            trigger_binary[6 - trigger_channel] = '1'
+            trigger_binary = ''.join(trigger_binary)
             awg_program = awg_program + textwrap.dedent(
             """\
-            setDigTrigger(""" + trigger_binary + """);
+            setTrigger(""" + trigger_binary + """);
+            wait(5);
+            setTrigger(0);
             """
             )
         else:
