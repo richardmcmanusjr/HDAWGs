@@ -153,11 +153,20 @@ def generate_awg_program(array, awgModule, use = 'primary', trigger = '4', trigg
         )
 
     if trigger >= 0 and trigger < 4:
-        awg_program = awg_program + textwrap.dedent(
+        if use == 'primary':
+            trigger_binary = "0b0000"
+            trigger_binary[6 - trigger_channel] = 1
+            awg_program = awg_program + textwrap.dedent(
             """\
-            waitDigTrigger(""" + str(trigger_channel) + """);
+            setDigTrigger(""" + trigger_binary + """);
             """
-        )
+            )
+        else:
+            awg_program = awg_program + textwrap.dedent(
+                """\
+                waitDigTrigger(""" + str(trigger_channel) + """);
+                """
+            )
 
     if count == "Infinite":
         awg_program = awg_program + textwrap.dedent(
@@ -331,11 +340,12 @@ def run_mds_program(daq, device_1, device_2, awgModule, awg_program):
         print("Upload to the HDAWG successful.")
     if awgModule.getInt("elf/status") == 1:
         raise Exception("Upload to the HDAWG failed.")
-    
-    daq.setInt(f"/{device}/awgs/0/userregs/0", 1)
-    daq.setInt(f"/{device}/awgs/0/enable", 1)
 
     return awgModule.getInt("elf/status")
+
+def awg_enable(daq, device):
+    daq.setInt(f"/{device}/awgs/0/userregs/0", 1)
+    daq.setInt(f"/{device}/awgs/0/enable", 1)
 
 def awg_reset(daq, device):
     exp_setting = [["/%s/AWGS/0/RESET" % device, 1]]

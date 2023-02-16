@@ -278,32 +278,30 @@ while True:
                 primary_daq, primary_device = hdawg.configure_api(primary_device_id)    # Establish connection to local server Zurich LabOne API
                 channel_grouping = 0    # Initialize channel grouping to 1 x 8 (cores x channels)
                 
-                if secondary_device_id != None:
-                    channel_grouping = -1   # Set channel grouping to mds
-                
-                if primary_daq != None:
-                    primary_exp_setting = hdawg.generate_settings(primary_device, array, sampleRate, use = 'primary',
-                        trigger = trigger, trigger_channel = trigger_channel, channel_grouping = channel_grouping)  # Generate list of settings 
-                    hdawg.set_awg_settings(primary_daq, primary_exp_setting)    # Program HDAWG with settings
-                    primary_awgModule = hdawg.initiate_AWG(primary_daq, primary_device) # Initialize awgModule 
-                
                 if secondary_device_id != 'None':
                     secondary_daq, secondary_device = hdawg.configure_api(secondary_device_id)  # Establish connection to the same local server using Zurich LabOne API
                     if secondary_daq != None:   
                         secondary_exp_setting = hdawg.generate_settings(secondary_device, array, sampleRate, use = 'secondary',
                             trigger = trigger, trigger_channel = trigger_channel, channel_grouping = channel_grouping)  # Generate list of settings 
                         hdawg.set_awg_settings(secondary_daq, secondary_exp_setting)    # Program HDAWG with settings
-                        mds = hdawg.initiate_mds(primary_daq, primary_device, secondary_device) # Initialize multi-device sync (mds) module
-                        mds_program = hdawg.generate_mds_program(array, mds, primary_awgModule, # Generate program for mds module
-                            trigger = trigger, trigger_channel = trigger_channel, count = wave_count)   
-                        hdawg.run_awg_program(primary_daq, primary_device, primary_awgModule, mds_program)  # Program primary HDAWG with mds program
-                    
-                    else:
-                        primary_awg_program = hdawg.generate_awg_program(array, primary_awgModule, use = 'primary', # Generate program for single HDAWG
+                        secondary_awgModule = hdawg.initiate_AWG(secondary_daq, secondary_device) # Initialize awgModule 
+                        secondary_awg_program = hdawg.generate_awg_program(array, secondary_awgModule, use = 'secondary', # Generate program for single HDAWG
                         trigger = trigger, trigger_channel = trigger_channel, count = wave_count)
-                        hdawg.run_awg_program(primary_daq, primary_device, primary_awgModule, primary_awg_program)  # Program single HDAWG with awg program
-                    window["-GENERATE-"].update('Stop!', button_color = 'white on red') # Switch button to 'Stop!'
-                    window["-GENERATION PROMPT-"].update('AWG is generating waveforms.')
+                        hdawg.run_awg_program(secondary_daq, secondary_device, secondary_awgModule, secondary_awg_program)  # Program single HDAWG with awg program
+                        hdawg.awg_enable(secondary_daq, secondary_device) 
+
+                if primary_daq != None:
+                    primary_exp_setting = hdawg.generate_settings(primary_device, array, sampleRate, use = 'primary',
+                        trigger = trigger, trigger_channel = trigger_channel, channel_grouping = channel_grouping)  # Generate list of settings 
+                    hdawg.set_awg_settings(primary_daq, primary_exp_setting)    # Program HDAWG with settings
+                    primary_awgModule = hdawg.initiate_AWG(primary_daq, primary_device) # Initialize awgModule 
+                    primary_awg_program = hdawg.generate_awg_program(array, primary_awgModule, use = 'primary', # Generate program for single HDAWG
+                    trigger = trigger, trigger_channel = trigger_channel, count = wave_count)
+                    hdawg.run_awg_program(primary_daq, primary_device, primary_awgModule, primary_awg_program)  # Program single HDAWG with awg program
+                    hdawg.awg_enable(primary_daq, primary_device) 
+
+                window["-GENERATE-"].update('Stop!', button_color = 'white on red') # Switch button to 'Stop!'
+                window["-GENERATION PROMPT-"].update('AWG is generating waveforms.')
             
             else:
                 hdawg.awg_reset(primary_daq, primary_device)    # Turn off enable 
