@@ -43,16 +43,16 @@ def generate_settings(
     numCols = int(len(array[0])) # 2 columns in your example
     
     if use == 'primary':
-        reference_clock_source = 0
-    else:
         reference_clock_source = 1
+    else:
+        reference_clock_source = 0
     # print(numCols)
     exp_setting = [
         ["/%s/awgs/0/outputs/0/modulation/mode" % device, 0],
         ["/%s/awgs/0/time" % device, 0],
         ["/%s/awgs/0/userregs/0" % device, 0],
         ["/%s/system/clocks/sampleclock/freq" % device, sampleRate],
-        ["/%s/system/clocks/referenceclock/source" % device, 1],
+        ["/%s/system/clocks/referenceclock/source" % device, reference_clock_source],
         ["/%s/system/awg/channelgrouping" % device, channel_grouping]
     ]
 
@@ -160,7 +160,7 @@ def generate_awg_program(array, awgModule, use = 'primary', trigger = '4', trigg
             awg_program = awg_program + textwrap.dedent(
             """\
             setTrigger(""" + trigger_binary + """);
-            wait(5);
+            wait(46);
             setTrigger(0);
             """
             )
@@ -303,8 +303,6 @@ def run_awg_program(daq, device, awgModule, awg_program):
     if awgModule.getInt("elf/status") == 1:
         raise Exception("Upload to the HDAWG failed.")
     
-    awgModule.set("/awg/enable", 1)
-
     return awgModule.getInt("elf/status")
 
 def run_mds_program(daq, device_1, device_2, awgModule, awg_program):
@@ -347,7 +345,6 @@ def run_mds_program(daq, device_1, device_2, awgModule, awg_program):
     return awgModule.getInt("elf/status")
 
 def awg_enable(daq, device):
-    daq.setInt(f"/{device}/awgs/0/userregs/0", 1)
     daq.setInt(f"/{device}/awgs/0/enable", 1)
 
 def awg_reset(daq, device):

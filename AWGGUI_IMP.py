@@ -77,7 +77,6 @@ def compute_frequency(frequency): # Function that converts converts GUI inputs i
 
 def compute_sample_rate():
     if values["-SAMPLE RATE-"] == '100 Msps':    # Hardcoded value for minimum sample rate
-        print(values["-SAMPLE RATE-"])
         return 100e6
     else:
         baseRate = 2.4e9
@@ -286,9 +285,11 @@ while True:
                         hdawg.set_awg_settings(secondary_daq, secondary_exp_setting)    # Program HDAWG with settings
                         secondary_awgModule = hdawg.initiate_AWG(secondary_daq, secondary_device) # Initialize awgModule 
                         secondary_awg_program = hdawg.generate_awg_program(array, secondary_awgModule, use = 'secondary', # Generate program for single HDAWG
-                        trigger = trigger, trigger_channel = trigger_channel, count = wave_count)
+                            trigger = trigger, trigger_channel = trigger_channel, count = wave_count)
                         hdawg.run_awg_program(secondary_daq, secondary_device, secondary_awgModule, secondary_awg_program)  # Program single HDAWG with awg program
                         hdawg.awg_enable(secondary_daq, secondary_device) 
+                        print('Secondary HDAWG enabled.')
+
 
                 if primary_daq != None:
                     primary_exp_setting = hdawg.generate_settings(primary_device, array, sampleRate, use = 'primary',
@@ -296,9 +297,10 @@ while True:
                     hdawg.set_awg_settings(primary_daq, primary_exp_setting)    # Program HDAWG with settings
                     primary_awgModule = hdawg.initiate_AWG(primary_daq, primary_device) # Initialize awgModule 
                     primary_awg_program = hdawg.generate_awg_program(array, primary_awgModule, use = 'primary', # Generate program for single HDAWG
-                    trigger = trigger, trigger_channel = trigger_channel, count = wave_count)
+                        trigger = trigger, trigger_channel = trigger_channel, count = wave_count)
                     hdawg.run_awg_program(primary_daq, primary_device, primary_awgModule, primary_awg_program)  # Program single HDAWG with awg program
                     hdawg.awg_enable(primary_daq, primary_device) 
+                    print('Primary HDAWG enabled.')
 
                 window["-GENERATE-"].update('Stop!', button_color = 'white on red') # Switch button to 'Stop!'
                 window["-GENERATION PROMPT-"].update('AWG is generating waveforms.')
