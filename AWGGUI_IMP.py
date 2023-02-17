@@ -30,15 +30,15 @@ def create_plot(array): # Function that generates preview plot from 2D array usi
     ax = plt.gca()
     ax.cla()    # Clear the current axes
     ax.grid()   # Enable Grid
-    plt.figure(facecolor = '#ebeded')   # Set color of figure
+    plt.figure(facecolor = '#25292E')   # Set color of figure
     for i in range(numCols):    # Create zero order hold plot of each column
         current_color = ['b', 'g', 'r', 'c', 'm','y','k']   # Vary Colors of each wave
         plt.step(np.linspace(0,len(array[:,i]),len(array[:,i]), endpoint = False), array[:,i], color=current_color[i%7], marker='o',
             markersize = 1, linewidth = 0.75) # Plot
-    plt.title(os.path.basename(filename), fontsize=8) # Title plot with name of csv file
-    plt.tick_params(axis='both', labelsize=4)   
-    plt.xlabel('Index', fontsize=6)
-    plt.ylabel('Magnitude', fontsize=6)
+    plt.title(os.path.basename(filename), fontsize=8, color='white') # Title plot with name of csv file
+    plt.tick_params(axis='both', labelsize=4, color='white', labelcolor='white')   
+    plt.xlabel('Index', fontsize=6, color='white')
+    plt.ylabel('Magnitude', fontsize=6, color='white')
     plt.grid(True)
     return plt.gcf()    
 
@@ -100,6 +100,8 @@ def draw_figure(canvas, figure): # Initializes figure for plot
     figure_canvas_agg.draw()
     figure_canvas_agg.get_tk_widget().pack(side='top', fill='both', expand=1)
     return figure_canvas_agg
+
+sg.theme('Dark Grey 14')
 
 file_list_column = [    # Left half of GUI structure
 
@@ -185,7 +187,8 @@ layout = [
 ]
 
 # ---- Program Window ----
-window = sg.Window("AWG GUI", layout, finalize=True, element_justification='center',resizable=True)
+window = sg.Window("AWG GUI by Richard McManus (2023)", layout, finalize=True,
+    element_justification='center',resizable=True)
 
 # ----- Initialize Global Veriables needed for event loop -----
 frequency = 1e6
