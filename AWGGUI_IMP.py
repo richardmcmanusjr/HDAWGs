@@ -140,14 +140,14 @@ file_list_column = [    # Left half of GUI structure
         )
     ],
     [
-        sg.Text("Secondary Device ID     "),
+        sg.Text("Secondary Device ID    "),
         sg.Combo(
             secondaryDeviceIds, enable_events=True, size=(15,1),readonly=True,
             default_value=secondaryDeviceIds[2], key="-SECONDARY DEVICE ID-"
         )
     ],
     [
-        sg.Text("Wave Count                 "),
+        sg.Text("Wave Count                  "),
         sg.Combo(
             waveCounts, enable_events=True, size=(15,1),
             default_value=waveCounts[0], key="-WAVE COUNT-"
@@ -164,11 +164,15 @@ file_list_column = [    # Left half of GUI structure
             default_value = triggerChannels[0], key="-TRIGGER CHANNEL-")
     ],
     [sg.VPush()],
-    [sg.Button('Generate', button_color='white on green', key="-GENERATE-",size=(30,1),expand_x = True,
+    [sg.Button('Program', button_color='white on green', key="-PROGRAM-",size=(30,1),expand_x = True,
         expand_y = True)
     ],
     [sg.Text("",key="-GENERATION PROMPT-",expand_x = True,
-        expand_y = True, justification = 'center')]
+        expand_y = True, justification = 'center')],
+    [sg.Button('Enable Output', button_color='white on green', key="-ENABLE-",size=(30,1),expand_x = True,
+        expand_y = True, visible=False)],
+    [sg.Text("",key="-ENABLE PROMPT-",expand_x = True,
+        expand_y = True, justification = 'center')],
 ]
 
 # ----- Full layout -----
@@ -176,11 +180,11 @@ layout = [
     [
         sg.Column(file_list_column),
         sg.VSeperator(),
-        sg.Canvas(size=(650, 650), key='-CANVAS-'),
+        sg.Canvas(size=(650, 650), key='-CANVAS-')
     ]
 ]
 
-# ---- Generate Window ----
+# ---- Program Window ----
 window = sg.Window("AWG GUI", layout, finalize=True, element_justification='center',resizable=True)
 
 # ----- Initialize Global Veriables needed for event loop -----
@@ -241,8 +245,8 @@ while True:
         else:
             sg.popup('Select File.', 'File must be selected to update graph.')
     
-    # Generates sequence and sends to HDAWGs 
-    if event == "-GENERATE-":
+    # Programs sequence and sends to HDAWGs 
+    if event == "-PROGRAM-":
         # Updates input values
         wave_count = compute_wave_count(wave_count)
         primary_device_id = values["-PRIMARY DEVICE ID-"]
@@ -272,7 +276,7 @@ while True:
                 'Ensure the sample rate is at least twice the frequency to prevent aliasing.')
 
         else:   # No flags raised
-            if window["-GENERATE-"].get_text() == 'Generate':   # Current event is to generate and program
+            if window["-PROGRAM-"].get_text() == 'Program':   # Current event is to generate and program
                 array = create_interp_array(filename,compute_frequency(frequency),compute_sample_rate())
                 primary_daq, primary_device = hdawg.configure_api(primary_device_id)    # Establish connection to local server Zurich LabOne API
                 channel_grouping = 2    # Initialize channel grouping to 1 x 8 (cores x channels)
@@ -287,7 +291,6 @@ while True:
                         secondary_awg_program = hdawg.generate_awg_program(array, secondary_awgModule, use = 'secondary', # Generate program for single HDAWG
                             trigger = trigger, trigger_channel = trigger_channel, count = wave_count)
                         hdawg.run_awg_program(secondary_daq, secondary_device, secondary_awgModule, secondary_awg_program)  # Program single HDAWG with awg program
-                        hdawg.awg_enable(secondary_daq, secondary_device) 
                         print('Secondary HDAWG enabled.')
 
 
@@ -302,18 +305,41 @@ while True:
                     hdawg.awg_enable(primary_daq, primary_device) 
                     print('Primary HDAWG enabled.')
 
-                window["-GENERATE-"].update('Stop!', button_color = 'white on red') # Switch button to 'Stop!'
+                window["-PROGRAM-"].update('Reset!', button_color = 'white on red') # Switch button to 'Reset!'
                 window["-GENERATION PROMPT-"].update('AWG is generating waveforms.')
+                window["-ENABLE-"].update(visible=True) # Show Enable Button
             
             else:
                 hdawg.awg_reset(primary_daq, primary_device)    # Turn off enable 
                 if secondary_daq != None:
                     hdawg.awg_reset(secondary_daq, secondary_device)    # Turn off enable
-                window["-GENERATE-"].update('Generate', button_color = 'white on green')    # Switch button to 'Generate'
+                window["-PROGRAM-"].update('Program', button_color = 'white on green')    # Switch button to 'Program'
                 window["-GENERATION PROMPT-"].update('')
+                window["-ENABLE-"].update(visible=False) # Show Enable Button
+
         #sg.popup('Error Generating Waveforms!', 'AWG with Device ID, ' + primary_device_id + ', did not connect.', 'Please Try Again.')
     
-    elif event == "-FILE LIST-":  # A file was chosen from the listbox
+    if event == "-ENABLE-":
+        if window["-PROGRAM-"].get_text() == 'Program':   # AWGs are not programed
+            sg.popup('Error!',
+                'AWGs are not programmed.', 'Please program AWGs and then enable output.')
+        else:
+            if window["-ENABLE-"].get_text() == 'Enable Output':   # Current event is to generate and program
+                if secondary_daq != None:
+                    hdawg.awg_enable(secondary_daq, secondary_device) 
+                if primary_daq != None:
+                    hdawg.awg_enable(primary_daq, primary_device) 
+                window["-ENABLE-"].update('Disable Output!', button_color = 'white on red') # Switch button to 'Disable Output!'
+                window["-ENABLE PROMPT-"].update('AWG output enabled.')
+            else:
+                if secondary_daq != None:
+                    hdawg.awg_disable(secondary_daq, secondary_device) 
+                if primary_daq != None:
+                    hdawg.awg_disable(primary_daq, primary_device) 
+                window["-ENABLE-"].update('Enable Output', button_color = 'white on green') # Switch button to 'Enable Output!'
+                window["-ENABLE PROMPT-"].update('')
+
+    if event == "-FILE LIST-":  # A file was chosen from the listbox
         if bool(values["-FILE LIST-"]):
             filename = os.path.join(    # Specify chosen file
                 values["-FOLDER-"], values["-FILE LIST-"][0]

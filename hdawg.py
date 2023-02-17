@@ -347,6 +347,9 @@ def run_mds_program(daq, device_1, device_2, awgModule, awg_program):
 def awg_enable(daq, device):
     daq.setInt(f"/{device}/awgs/0/enable", 1)
 
+def awg_disable(daq, device):
+    daq.setInt(f"/{device}/awgs/0/enable", 0)
+
 def awg_reset(daq, device):
     exp_setting = [["/%s/AWGS/0/RESET" % device, 1]]
     set_awg_settings(daq, exp_setting)
