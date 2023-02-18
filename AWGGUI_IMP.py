@@ -107,6 +107,8 @@ def draw_figure(canvas, figure): # Initializes figure for plot
 sg.theme('Dark Grey 14')
 
 file_list_column = [    # Left half of GUI structure
+    [sg.Image('FMCtoEdge.png')],
+    [sg.HSeparator()],
     [
         sg.Text("Folder"),  
         sg.In(size=(25, 1), enable_events=True, key="-FOLDER-"),
@@ -189,8 +191,6 @@ file_list_column = [    # Left half of GUI structure
 ]
 
 plot_column = [
-    [sg.Image('FMCtoEdge.png')],
-    [sg.HSeparator()],
     [sg.Canvas(size=(650, 650), key='-CANVAS-')]
 ]
 
