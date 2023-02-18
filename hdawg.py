@@ -280,11 +280,11 @@ def run_awg_program(daq, device, awgModule, awg_program):
 
     if awgModule.getInt("compiler/status") == 0:
         print(
-            "Compilation successful with no warnings, will upload the program to the HDAWG."
+            "Compilation successful with no warnings, will upload the program to device " + device
         )
     if awgModule.getInt("compiler/status") == 2:
         print(
-            "Compilation successful with warnings, will upload the program to the HDAWG."
+            "Compilation successful with warnings, will upload the program to device " + device
         )
         print("Compiler warning: ", awgModule.getString("compiler/statusstring"))
 
@@ -299,9 +299,9 @@ def run_awg_program(daq, device, awgModule, awg_program):
         i += 1
     print(f"{i} progress: {awgModule.getDouble('progress'):.2f}")
     if awgModule.getInt("elf/status") == 0:
-        print("Upload to the HDAWG successful.")
+        print("Upload to device " + device + " successful.")
     if awgModule.getInt("elf/status") == 1:
-        raise Exception("Upload to the HDAWG failed.")
+        raise Exception("Upload to device " + device + "failed.")
     
     return awgModule.getInt("elf/status")
 
@@ -346,13 +346,14 @@ def run_mds_program(daq, device_1, device_2, awgModule, awg_program):
 
 def awg_enable(daq, device):
     daq.setInt(f"/{device}/awgs/0/enable", 1)
+    print('Device ' + device + ' enabled.')
 
 def awg_disable(daq, device):
     daq.setInt(f"/{device}/awgs/0/enable", 0)
+    print('Device ' + device + ' disabled.')
 
 def awg_reset(daq, device):
     exp_setting = [["/%s/AWGS/0/RESET" % device, 1]]
     set_awg_settings(daq, exp_setting)
-    print("%s AWG Program Cleared" % device)
-    print("HDAWG, %s, Reset. State: Not Ready" % device)
+    print("Device %s program cleared" % device)
     

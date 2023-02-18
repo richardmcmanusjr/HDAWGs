@@ -55,6 +55,7 @@ def create_interp_array(filename, frequency, sampleRate):   # Function that load
 def compute_frequency(frequency): # Function that converts converts GUI inputs into frequency float
     freqUnits = values["-FREQUENCY UNITS-"]
     global frequencyFlag    # Initialize flag for empty frequency drop down
+    global aliasingFlag # Initialize flag for aliasing drop down
     if freqUnits == 'GHz':
         multiplier = 1e9
     elif freqUnits == 'MHz':
@@ -70,8 +71,10 @@ def compute_frequency(frequency): # Function that converts converts GUI inputs i
         temp_frequency = float(values["-FREQUENCY-"]) * multiplier # Compute non-scientific number frequency
         global sampleRate
         if temp_frequency > sampleRate: # Compare frequency specified to current sample rate
+            aliasingFlag = True
             sg.popup('Error!', 'Frequency must be less than sample rate.')
         else:
+            aliasingFlag = False
             frequency = temp_frequency
     return frequency
 
@@ -149,7 +152,7 @@ file_list_column = [    # Left half of GUI structure
         )
     ],
     [
-        sg.Text("Wave Count                  "),
+        sg.Text("Wave Count                 "),
         sg.Combo(
             waveCounts, enable_events=True, size=(15,1),
             default_value=waveCounts[0], key="-WAVE COUNT-"
@@ -179,7 +182,7 @@ file_list_column = [    # Left half of GUI structure
     [sg.Button('Program', button_color='white on green', key="-PROGRAM-",size=(30,1),expand_x = True,
         expand_y = True)
     ],
-    [sg.Text("",key="-GENERATION PROMPT-",expand_x = True,
+    [sg.Text("",key="-PROGRAM PROMPT-",expand_x = True,
         expand_y = True, justification = 'center')],
     [sg.Button('Enable Output', button_color='white on green', key="-ENABLE-",size=(30,1),expand_x = True,
         expand_y = True, visible=False)],
@@ -206,6 +209,7 @@ sampleRate = 2.4e9
 filename = None
 fig_agg = None
 frequencyFlag = False
+aliasingFlag = False
 waveCountFlag = False
 primary_daq = None
 primary_device = None
@@ -254,82 +258,79 @@ while True:
     if event == "-UPDATE-":
         sampleRate = compute_sample_rate()
         frequency = compute_frequency(frequency)
-        if fig_agg != None:
-            fig_agg.get_tk_widget().forget()
-            # del fig_agg
-            fig_agg = draw_figure(window['-CANVAS-'].TKCanvas, create_plot(create_interp_array(filename,compute_frequency(frequency),compute_sample_rate())))
-        else:
-            sg.popup('Select File.', 'File must be selected to update graph.')
-    
+        if aliasingFlag == False and frequencyFlag == False:
+            if fig_agg != None:
+                fig_agg.get_tk_widget().forget()
+                # del fig_agg
+                fig_agg = draw_figure(window['-CANVAS-'].TKCanvas, create_plot(create_interp_array(filename,compute_frequency(frequency),compute_sample_rate())))
+            else:
+                sg.popup('Select File.', 'File must be selected to update graph.')
+        
     # Programs sequence and sends to HDAWGs 
     if event == "-PROGRAM-":
-        # Updates input values
-        wave_count = compute_wave_count(wave_count)
-        primary_device_id = values["-PRIMARY DEVICE ID-"]
-        secondary_device_id = values["-SECONDARY DEVICE ID-"]
-        sync_trigger = triggers.index(values["-SYNC TRIGGER-"])
-        enable_trigger = triggers.index(values["-ENABLE TRIGGER-"])
-        sync_trigger_channel = values["-SYNC TRIGGER CHANNEL-"]
-        enable_trigger_channel = values["-ENABLE TRIGGER CHANNEL-"]
-        sampleRate = compute_sample_rate()
-        frequency = compute_frequency(frequency)
+        if window["-PROGRAM-"].get_text() == 'Program':   # Current event is to generate and program
+            # Updates input values
+            wave_count = compute_wave_count(wave_count)
+            primary_device_id = values["-PRIMARY DEVICE ID-"]
+            secondary_device_id = values["-SECONDARY DEVICE ID-"]
+            sync_trigger = triggers.index(values["-SYNC TRIGGER-"])
+            enable_trigger = triggers.index(values["-ENABLE TRIGGER-"])
+            sync_trigger_channel = values["-SYNC TRIGGER CHANNEL-"]
+            enable_trigger_channel = values["-ENABLE TRIGGER CHANNEL-"]
+            sampleRate = compute_sample_rate()
+            frequency = compute_frequency(frequency)
 
-        if fig_agg == None: # Plot has not been generated
-            sg.popup('Select File.', 'File must be selected to generate waveforms.')
-
-        elif frequencyFlag == True: # Frequency is not specified
-            sg.popup('Error!', 'Frequency is not specified.',
-                'Please input frequency and try again.')
-
-        elif waveCountFlag == True: # Wave count is not an integer or 'Infinite'
-            sg.popup('Error!', 'User defined wave count must be an integer.',
-                'Please redefine wavecount and try again.')
-
-        elif primary_device_id == secondary_device_id:  # Cannot specify device to be primary and secondary
-            sg.popup('Error!', 'A device cannot be both primary and secondary.',
-                'Please respecify device ids and try again.')
-
-        elif 2 * frequency >= sampleRate:   # Warn user aliasing will occur
-            sg.popup('Warning!',
-                'Ensure the sample rate is at least twice the frequency to prevent aliasing.')
-
-        else:   # No flags raised
-            if window["-PROGRAM-"].get_text() == 'Program':   # Current event is to generate and program
-                array = create_interp_array(filename,compute_frequency(frequency),compute_sample_rate())
-                primary_daq, primary_device = hdawg.configure_api(primary_device_id)    # Establish connection to local server Zurich LabOne API
-                channel_grouping = 2    # Initialize channel grouping to 1 x 8 (cores x channels)
+            if fig_agg == None: # Plot has not been generated
+                sg.popup('Select File.', 'File must be selected to generate waveforms.')
                 
-                if secondary_device_id != 'None':
-                    secondary_daq, secondary_device = hdawg.configure_api(secondary_device_id)  # Establish connection to the same local server using Zurich LabOne API
-                    if secondary_daq != None:   
-                        secondary_exp_setting = hdawg.generate_settings(secondary_device, array, sampleRate, use = 'secondary',
-                            trigger = sync_trigger, trigger_channel = sync_trigger_channel, channel_grouping = channel_grouping)  # Generate list of settings 
-                        hdawg.set_awg_settings(secondary_daq, secondary_exp_setting)    # Program HDAWG with settings
-                        secondary_awgModule = hdawg.initiate_AWG(secondary_daq, secondary_device) # Initialize awgModule 
-                        secondary_awg_program = hdawg.generate_awg_program(array, secondary_awgModule, use = 'secondary', # Generate program for single HDAWG
-                            trigger = sync_trigger, trigger_channel = sync_trigger_channel, count = wave_count)
-                        hdawg.run_awg_program(secondary_daq, secondary_device, secondary_awgModule, secondary_awg_program)  # Program single HDAWG with awg program
+            elif waveCountFlag == True: # Wave count is not an integer or 'Infinite'
+                sg.popup('Error!', 'User defined wave count must be an integer.',
+                    'Please redefine wavecount and try again.')
 
-                if primary_daq != None:
-                    primary_exp_setting = hdawg.generate_settings(primary_device, array, sampleRate, use = 'primary',
-                        trigger = enable_trigger, trigger_channel = enable_trigger_channel, channel_grouping = channel_grouping)  # Generate list of settings 
-                    hdawg.set_awg_settings(primary_daq, primary_exp_setting)    # Program HDAWG with settings
-                    primary_awgModule = hdawg.initiate_AWG(primary_daq, primary_device) # Initialize awgModule 
-                    primary_awg_program = hdawg.generate_awg_program(array, primary_awgModule, use = 'primary', # Generate program for single HDAWG
-                        trigger = enable_trigger, trigger_channel = enable_trigger_channel, marker = sync_trigger_channel, count = wave_count)
-                    hdawg.run_awg_program(primary_daq, primary_device, primary_awgModule, primary_awg_program)  # Program single HDAWG with awg program
+            elif primary_device_id == secondary_device_id:  # Cannot specify device to be primary and secondary
+                sg.popup('Error!', 'A device cannot be both primary and secondary.',
+                    'Please respecify device ids and try again.')
 
-                window["-PROGRAM-"].update('Reset!', button_color = 'white on red') # Switch button to 'Reset!'
-                window["-GENERATION PROMPT-"].update('Programming Successful.')
-                window["-ENABLE-"].update(visible=True) # Show Enable Button
+            elif 2 * frequency >= sampleRate:   # Warn user aliasing will occur
+                sg.popup('Warning!',
+                    'Ensure the sample rate is at least twice the frequency to prevent aliasing.')
+
+            elif frequencyFlag == False and aliasingFlag == False:   # No flags raised
+                    array = create_interp_array(filename,compute_frequency(frequency),compute_sample_rate())
+                    primary_daq, primary_device = hdawg.configure_api(primary_device_id)    # Establish connection to local server Zurich LabOne API
+                    channel_grouping = 2    # Initialize channel grouping to 1 x 8 (cores x channels)
+                    
+                    if secondary_device_id != 'None':
+                        secondary_daq, secondary_device = hdawg.configure_api(secondary_device_id)  # Establish connection to the same local server using Zurich LabOne API
+                        if secondary_daq != None:   
+                            secondary_exp_setting = hdawg.generate_settings(secondary_device, array, sampleRate, use = 'secondary',
+                                trigger = sync_trigger, trigger_channel = sync_trigger_channel, channel_grouping = channel_grouping)  # Generate list of settings 
+                            hdawg.set_awg_settings(secondary_daq, secondary_exp_setting)    # Program HDAWG with settings
+                            secondary_awgModule = hdawg.initiate_AWG(secondary_daq, secondary_device) # Initialize awgModule 
+                            secondary_awg_program = hdawg.generate_awg_program(array, secondary_awgModule, use = 'secondary', # Generate program for single HDAWG
+                                trigger = sync_trigger, trigger_channel = sync_trigger_channel, count = wave_count)
+                            hdawg.run_awg_program(secondary_daq, secondary_device, secondary_awgModule, secondary_awg_program)  # Program single HDAWG with awg program
+
+                    if primary_daq != None:
+                        primary_exp_setting = hdawg.generate_settings(primary_device, array, sampleRate, use = 'primary',
+                            trigger = enable_trigger, trigger_channel = enable_trigger_channel, channel_grouping = channel_grouping)  # Generate list of settings 
+                        hdawg.set_awg_settings(primary_daq, primary_exp_setting)    # Program HDAWG with settings
+                        primary_awgModule = hdawg.initiate_AWG(primary_daq, primary_device) # Initialize awgModule 
+                        primary_awg_program = hdawg.generate_awg_program(array, primary_awgModule, use = 'primary', # Generate program for single HDAWG
+                            trigger = enable_trigger, trigger_channel = enable_trigger_channel, marker = sync_trigger_channel, count = wave_count)
+                        hdawg.run_awg_program(primary_daq, primary_device, primary_awgModule, primary_awg_program)  # Program single HDAWG with awg program
+
+                    window["-PROGRAM-"].update('Reset!', button_color = 'white on red') # Switch button to 'Reset!'
+                    window["-PROGRAM PROMPT-"].update('Programming Successful.')
+                    window["-ENABLE-"].update(visible=True) # Show Enable Button
             
-            else:
-                hdawg.awg_reset(primary_daq, primary_device)    # Turn off enable 
-                if secondary_daq != None:
-                    hdawg.awg_reset(secondary_daq, secondary_device)    # Turn off enable
-                window["-PROGRAM-"].update('Program', button_color = 'white on green')    # Switch button to 'Program'
-                window["-GENERATION PROMPT-"].update('')
-                window["-ENABLE-"].update(visible=False) # Show Enable Button
+        else:
+            hdawg.awg_reset(primary_daq, primary_device)    # Turn off enable 
+            if secondary_daq != None:
+                hdawg.awg_reset(secondary_daq, secondary_device)    # Turn off enable
+            window["-PROGRAM-"].update('Program', button_color = 'white on green')    # Switch button to 'Program'
+            window["-PROGRAM PROMPT-"].update('')
+            window["-ENABLE-"].update(visible=False) # Show Enable Button
 
         #sg.popup('Error Generating Waveforms!', 'AWG with Device ID, ' + primary_device_id + ', did not connect.', 'Please Try Again.')
     
@@ -341,18 +342,16 @@ while True:
             if window["-ENABLE-"].get_text() == 'Enable Output':   # Current event is to generate and program
                 if secondary_daq != None:
                     hdawg.awg_enable(secondary_daq, secondary_device) 
-                    print('Secondary HDAWG enabled.')
                     time.sleep(0.1)
                 if primary_daq != None:
                     hdawg.awg_enable(primary_daq, primary_device) 
                 window["-ENABLE-"].update('Disable Output!', button_color = 'white on red') # Switch button to 'Disable Output!'
-                window["-ENABLE PROMPT-"].update('AWG output enabled.')
+                window["-ENABLE PROMPT-"].update('Output Enabled.')
             else:
                 if secondary_daq != None:
                     hdawg.awg_disable(secondary_daq, secondary_device) 
                 if primary_daq != None:
                     hdawg.awg_disable(primary_daq, primary_device)
-                    print('Primary HDAWG enabled.')
                 window["-ENABLE-"].update('Enable Output', button_color = 'white on green') # Switch button to 'Enable Output!'
                 window["-ENABLE PROMPT-"].update('')
 
