@@ -35,10 +35,10 @@ def create_plot(array): # Function that generates preview plot from 2D array usi
         current_color = ['b', 'g', 'r', 'c', 'm','y','k']   # Vary Colors of each wave
         plt.step(np.linspace(0,len(array[:,i]),len(array[:,i]), endpoint = False), array[:,i], color=current_color[i%7], marker='o',
             markersize = 1, linewidth = 0.75) # Plot
-    plt.title(os.path.basename(filename), fontsize=8, color='white') # Title plot with name of csv file
-    plt.tick_params(axis='both', labelsize=4, color='white', labelcolor='white')   
-    plt.xlabel('Index', fontsize=6, color='white')
-    plt.ylabel('Magnitude', fontsize=6, color='white')
+    plt.title(os.path.basename(filename), fontsize=12, color='white') # Title plot with name of csv file
+    plt.tick_params(axis='both', labelsize=6, color='white', labelcolor='white')   
+    plt.xlabel('Index', fontsize=8, color='white')
+    plt.ylabel('Magnitude', fontsize=8, color='white')
     plt.grid(True)
     return plt.gcf()    
 
