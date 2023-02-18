@@ -294,7 +294,7 @@ while True:
                         secondary_awg_program = hdawg.generate_awg_program(array, secondary_awgModule, use = 'secondary', # Generate program for single HDAWG
                             trigger = trigger, trigger_channel = trigger_channel, count = wave_count)
                         hdawg.run_awg_program(secondary_daq, secondary_device, secondary_awgModule, secondary_awg_program)  # Program single HDAWG with awg program
-                        print('Secondary HDAWG enabled.')
+                        
 
 
                 if primary_daq != None:
@@ -305,11 +305,9 @@ while True:
                     primary_awg_program = hdawg.generate_awg_program(array, primary_awgModule, use = 'primary', # Generate program for single HDAWG
                         trigger = trigger, trigger_channel = trigger_channel, count = wave_count)
                     hdawg.run_awg_program(primary_daq, primary_device, primary_awgModule, primary_awg_program)  # Program single HDAWG with awg program
-                    hdawg.awg_enable(primary_daq, primary_device) 
-                    print('Primary HDAWG enabled.')
 
                 window["-PROGRAM-"].update('Reset!', button_color = 'white on red') # Switch button to 'Reset!'
-                window["-GENERATION PROMPT-"].update('AWG is generating waveforms.')
+                window["-GENERATION PROMPT-"].update('Programming Successful.')
                 window["-ENABLE-"].update(visible=True) # Show Enable Button
             
             else:
@@ -330,6 +328,8 @@ while True:
             if window["-ENABLE-"].get_text() == 'Enable Output':   # Current event is to generate and program
                 if secondary_daq != None:
                     hdawg.awg_enable(secondary_daq, secondary_device) 
+                    print('Secondary HDAWG enabled.')
+                    time.sleep(0.1)
                 if primary_daq != None:
                     hdawg.awg_enable(primary_daq, primary_device) 
                 window["-ENABLE-"].update('Disable Output!', button_color = 'white on red') # Switch button to 'Disable Output!'
@@ -338,7 +338,8 @@ while True:
                 if secondary_daq != None:
                     hdawg.awg_disable(secondary_daq, secondary_device) 
                 if primary_daq != None:
-                    hdawg.awg_disable(primary_daq, primary_device) 
+                    hdawg.awg_disable(primary_daq, primary_device)
+                    print('Primary HDAWG enabled.')
                 window["-ENABLE-"].update('Enable Output', button_color = 'white on green') # Switch button to 'Enable Output!'
                 window["-ENABLE PROMPT-"].update('')
 
