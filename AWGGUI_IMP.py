@@ -156,14 +156,24 @@ file_list_column = [    # Left half of GUI structure
         )
     ],
         [
-        sg.Text("Trigger "),
+        sg.Text("Sync Trigger   "),
         sg.Combo(
             triggers, enable_events=True, size=(8,1), readonly = True,
-            default_value=triggers[4], key="-TRIGGER-"
+            default_value=triggers[4], key="-SYNC TRIGGER-"
         ),
-        sg.Text("Trigger Channel  "),
+        sg.Text("Channel"),
         sg.Combo(triggerChannels, enable_events=True, size=(4,1), readonly=True,
-            default_value = triggerChannels[0], key="-TRIGGER CHANNEL-")
+            default_value = triggerChannels[0], key="-SYNC TRIGGER CHANNEL-")
+    ],
+    [
+        sg.Text("Enable Trigger"),
+        sg.Combo(
+            triggers, enable_events=True, size=(8,1), readonly = True,
+            default_value=triggers[4], key="-ENABLE TRIGGER-"
+        ),
+        sg.Text("Channel"),
+        sg.Combo(triggerChannels, enable_events=True, size=(4,1), readonly=True,
+            default_value = triggerChannels[0], key="-ENABLE TRIGGER CHANNEL-")
     ],
     [sg.VPush()],
     [sg.Button('Program', button_color='white on green', key="-PROGRAM-",size=(30,1),expand_x = True,
@@ -234,9 +244,12 @@ while True:
     if event == "-WAVE COUNT-":
         wave_count = compute_wave_count(wave_count)
     
-    if event == "-TRIGGER-":
-        trigger = triggers.index(values["-TRIGGER-"])
+    if event == "-SYNC TRIGGER-":
+        sync_trigger = triggers.index(values["-SYNC TRIGGER-"])
     
+    if event == "-ENABLE TRIGGER-":
+        enable_trigger = triggers.index(values["-ENABLE TRIGGER-"])
+
     # Updates plot
     if event == "-UPDATE-":
         sampleRate = compute_sample_rate()
@@ -254,8 +267,10 @@ while True:
         wave_count = compute_wave_count(wave_count)
         primary_device_id = values["-PRIMARY DEVICE ID-"]
         secondary_device_id = values["-SECONDARY DEVICE ID-"]
-        trigger = triggers.index(values["-TRIGGER-"])
-        trigger_channel = values["-TRIGGER CHANNEL-"]
+        sync_trigger = triggers.index(values["-SYNC TRIGGER-"])
+        enable_trigger = triggers.index(values["-ENABLE TRIGGER-"])
+        sync_trigger_channel = values["-SYNC TRIGGER CHANNEL-"]
+        enable_trigger_channel = values["-ENABLE TRIGGER CHANNEL-"]
         sampleRate = compute_sample_rate()
         frequency = compute_frequency(frequency)
 
@@ -288,22 +303,20 @@ while True:
                     secondary_daq, secondary_device = hdawg.configure_api(secondary_device_id)  # Establish connection to the same local server using Zurich LabOne API
                     if secondary_daq != None:   
                         secondary_exp_setting = hdawg.generate_settings(secondary_device, array, sampleRate, use = 'secondary',
-                            trigger = trigger, trigger_channel = trigger_channel, channel_grouping = channel_grouping)  # Generate list of settings 
+                            trigger = sync_trigger, trigger_channel = sync_trigger_channel, channel_grouping = channel_grouping)  # Generate list of settings 
                         hdawg.set_awg_settings(secondary_daq, secondary_exp_setting)    # Program HDAWG with settings
                         secondary_awgModule = hdawg.initiate_AWG(secondary_daq, secondary_device) # Initialize awgModule 
                         secondary_awg_program = hdawg.generate_awg_program(array, secondary_awgModule, use = 'secondary', # Generate program for single HDAWG
-                            trigger = trigger, trigger_channel = trigger_channel, count = wave_count)
+                            trigger = sync_trigger, trigger_channel = sync_trigger_channel, count = wave_count)
                         hdawg.run_awg_program(secondary_daq, secondary_device, secondary_awgModule, secondary_awg_program)  # Program single HDAWG with awg program
-                        
-
 
                 if primary_daq != None:
                     primary_exp_setting = hdawg.generate_settings(primary_device, array, sampleRate, use = 'primary',
-                        trigger = trigger, trigger_channel = trigger_channel, channel_grouping = channel_grouping)  # Generate list of settings 
+                        trigger = enable_trigger, trigger_channel = enable_trigger_channel, channel_grouping = channel_grouping)  # Generate list of settings 
                     hdawg.set_awg_settings(primary_daq, primary_exp_setting)    # Program HDAWG with settings
                     primary_awgModule = hdawg.initiate_AWG(primary_daq, primary_device) # Initialize awgModule 
                     primary_awg_program = hdawg.generate_awg_program(array, primary_awgModule, use = 'primary', # Generate program for single HDAWG
-                        trigger = trigger, trigger_channel = trigger_channel, count = wave_count)
+                        trigger = enable_trigger, trigger_channel = enable_trigger_channel, marker = sync_trigger_channel, count = wave_count)
                     hdawg.run_awg_program(primary_daq, primary_device, primary_awgModule, primary_awg_program)  # Program single HDAWG with awg program
 
                 window["-PROGRAM-"].update('Reset!', button_color = 'white on red') # Switch button to 'Reset!'
