@@ -117,7 +117,7 @@ def initiate_mds(daq, device_1, device_2):
     time.sleep(0.2)
     return mds
 
-def generate_awg_program(array, awgModule, use = 'primary', trigger = '4', trigger_channel = 1, marker = 'None', count = 'Infinite'):
+def generate_awg_program(array, awgModule, use = 'primary', trigger = '4', trigger_channel = 1, marker = None, count = 'Infinite'):
     data_dir = awgModule.getString("directory")
     wave_dir = os.path.join(data_dir, "awg", "waves")
     if not os.path.isdir(wave_dir):
