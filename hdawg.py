@@ -60,13 +60,13 @@ def generate_settings(
         exp_setting.append(["/%s/awgs/0/auxtriggers/0/channel" % device, trigger_channel - 1])
         exp_setting.append(["/%s/awgs/0/auxtriggers/0/slope" % device, trigger])
 
-    if reference_clock_source == 0:
+    if reference_clock_source == 1:
         for i in range(min(numCols,8)):
             exp_setting.append(["/%s/sigouts/%d/on" % (device, i), 1])
             exp_setting.append(["/%s/sigouts/%d/range" % (device, i), awg_range])
             exp_setting.append(["/%s/awgs/0/outputs/%d/amplitude" % (device, i), amplitude])
 
-    if reference_clock_source == 1 and numCols > 8:
+    if reference_clock_source == 0 and numCols > 8:
         for i in range(min(numCols - 8, 16)):
             exp_setting.append(["/%s/sigouts/%d/on" % (device, i), 1])
             exp_setting.append(["/%s/sigouts/%d/range" % (device, i), awg_range])
