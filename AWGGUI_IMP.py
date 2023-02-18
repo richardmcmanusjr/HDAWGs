@@ -107,8 +107,6 @@ def draw_figure(canvas, figure): # Initializes figure for plot
 sg.theme('Dark Grey 14')
 
 file_list_column = [    # Left half of GUI structure
-
-    # [sg.Image(data=image1, key="-IMAGE")]
     [
         sg.Text("Folder"),  
         sg.In(size=(25, 1), enable_events=True, key="-FOLDER-"),
@@ -190,18 +188,24 @@ file_list_column = [    # Left half of GUI structure
         expand_y = True, justification = 'center')],
 ]
 
+plot_column = [
+    [sg.Image('FMCtoEdge.png')],
+    [sg.HSeparator()],
+    [sg.Canvas(size=(650, 650), key='-CANVAS-')]
+]
+
 # ----- Full layout -----
 layout = [
     [
         sg.Column(file_list_column),
         sg.VSeperator(),
-        sg.Canvas(size=(650, 650), key='-CANVAS-')
+        sg.Column(plot_column, element_justification='center')
     ]
 ]
 
 # ---- Program Window ----
 window = sg.Window("AWG GUI by Richard McManus (2023)", layout, finalize=True,
-    element_justification='center',resizable=True)
+    element_justification='center', resizable=True)
 
 # ----- Initialize Global Veriables needed for event loop -----
 frequency = 1e6
