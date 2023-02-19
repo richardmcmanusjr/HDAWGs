@@ -29,7 +29,7 @@ def create_plot(array): # Function that generates preview plot from 2D array usi
     ax = plt.gca()
     ax.cla()    # Clear the current axes
     ax.grid()   # Enable Grid
-    plt.figure(facecolor = '#25292E')   # Set color of figure
+    plt.figure(figsize=(8, 6.5), dpi=40, facecolor = '#25292E')
     for i in range(numCols):    # Create zero order hold plot of each column
         current_color = ['b', 'g', 'r', 'c', 'm','y','k']   # Vary Colors of each wave
         plt.step(np.linspace(0,len(array[:,i]),len(array[:,i]), endpoint = False), array[:,i], color=current_color[i%7], marker='o',
@@ -195,7 +195,7 @@ file_list_column = [    # Left half of GUI structure
 ]
 
 plot_column = [
-    [sg.Canvas(size=(650, 540), key='-CANVAS-')],
+    [sg.Canvas(size=(640, 520), key='-CANVAS-')],
     [sg.VPush()],
     [sg.HSeparator()],
     [sg.Output(size=(100, 10))]
