@@ -116,7 +116,7 @@ sg.theme('Dark Grey 14')
 file_list_column = [    # Left half of GUI structure
     [   
         sg.Column([
-            [sg.Image('FMCtoEdge.png')],
+            [sg.Image('Logos.png')],
             [sg.HSeparator()],
             [
                 sg.Text("Folder"),  
