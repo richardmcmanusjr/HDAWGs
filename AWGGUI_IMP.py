@@ -11,11 +11,10 @@ import numpy as np
 
 # Set global values
 deviceIds = ['dev8310', 'dev8259'] # HDAWG serial numbers
+secondaryDeviceIds = ['dev8310', 'dev8259', 'None'] # HDAWG serial numbers
 sampleRates = ['2.4 Gsps','1.2 Gsps','600 Msps','300 Msps','150 Msps', '100 Msps'] # Minimum Sample Rate is 100 Msps; Sample Rates do not need to be discrete
 primary_device_id = deviceIds[0]
-secondaryDeviceIds = deviceIds
-secondaryDeviceIds.append('None') # Allow user to use only primary device
-secondary_device_id = deviceIds[2] # Set one device to default
+secondary_device_id = secondaryDeviceIds[2] # Set one device to default
 waveCounts = ['Infinite'] 
 wave_count = waveCounts[0] # Set default waveCounts to infinite, can specify integer number of waves in GUI
 triggers = ['Level','Rising','Falling','Both','None'] # Triggers defined in HDAWG Manual, index is used to set node
@@ -148,7 +147,7 @@ file_list_column = [    # Left half of GUI structure
         ], element_justification='left'),
         sg.Column([
             [sg.Combo(
-                deviceIds, enable_events=True, size=(15,1),readonly=True,
+                deviceIds, enable_events=True, size=(15,1), readonly=True,
                 default_value=deviceIds[0], key="-PRIMARY DEVICE ID-")
             ],
             [sg.Combo(
@@ -196,7 +195,9 @@ file_list_column = [    # Left half of GUI structure
 ]
 
 plot_column = [
-    [sg.Canvas(size=(650, 450), key='-CANVAS-')],
+    [sg.Canvas(size=(650, 540), key='-CANVAS-')],
+    [sg.VPush()],
+    [sg.HSeparator()],
     [sg.Output(size=(100, 10))]
 ]
 
@@ -211,7 +212,7 @@ layout = [
 
 # ---- Program Window ----
 window = sg.Window("AWG GUI by Richard McManus (2023)", layout, finalize=True,
-    element_justification='center', resizable=False)
+    element_justification='center', resizable=True)
 
 # ----- Initialize Global Veriables needed for event loop -----
 frequency = 1e6
@@ -306,6 +307,8 @@ while True:
                     'Ensure the sample rate is at least twice the frequency to prevent aliasing.')
 
             elif frequencyFlag == False and aliasingFlag == False:   # No flags raised
+                    print('Programming... Please Wait.')
+                    window.refresh()    
                     array = create_interp_array(filename,compute_frequency(frequency),compute_sample_rate())
                     primary_daq, primary_device = hdawg.configure_api(primary_device_id)    # Establish connection to local server Zurich LabOne API
                     channel_grouping = 2    # Initialize channel grouping to 1 x 8 (cores x channels)
@@ -320,7 +323,7 @@ while True:
                             secondary_awg_program = hdawg.generate_awg_program(array, secondary_awgModule, use = 'secondary', # Generate program for single HDAWG
                                 trigger = sync_trigger, trigger_channel = sync_trigger_channel, count = wave_count)
                             hdawg.run_awg_program(secondary_daq, secondary_device, secondary_awgModule, secondary_awg_program)  # Program single HDAWG with awg program
-
+                            window.refresh()
                     if primary_daq != None:
                         primary_exp_setting = hdawg.generate_settings(primary_device, array, sampleRate, use = 'primary',
                             trigger = enable_trigger, trigger_channel = enable_trigger_channel, channel_grouping = channel_grouping)  # Generate list of settings 
@@ -329,15 +332,17 @@ while True:
                         primary_awg_program = hdawg.generate_awg_program(array, primary_awgModule, use = 'primary', # Generate program for single HDAWG
                             trigger = enable_trigger, trigger_channel = enable_trigger_channel, marker = sync_trigger_channel, count = wave_count)
                         hdawg.run_awg_program(primary_daq, primary_device, primary_awgModule, primary_awg_program)  # Program single HDAWG with awg program
-
+                        window.refresh()
                     window["-PROGRAM-"].update('Reset!', button_color = 'white on red') # Switch button to 'Reset!'
                     window["-PROGRAM PROMPT-"].update('Programming Successful.')
                     window["-ENABLE-"].update(visible=True) # Show Enable Button
             
         else:
             hdawg.awg_reset(primary_daq, primary_device)    # Turn off enable 
+            window.refresh()
             if secondary_daq != None:
                 hdawg.awg_reset(secondary_daq, secondary_device)    # Turn off enable
+                window.refresh()
             window["-PROGRAM-"].update('Program', button_color = 'white on green')    # Switch button to 'Program'
             window["-PROGRAM PROMPT-"].update('')
             window["-ENABLE-"].update(visible=False) # Show Enable Button
@@ -352,16 +357,20 @@ while True:
             if window["-ENABLE-"].get_text() == 'Enable Output':   # Current event is to generate and program
                 if secondary_daq != None:
                     hdawg.awg_enable(secondary_daq, secondary_device) 
+                    window.refresh()
                     time.sleep(0.1)
                 if primary_daq != None:
                     hdawg.awg_enable(primary_daq, primary_device) 
+                    window.refresh()
                 window["-ENABLE-"].update('Disable Output!', button_color = 'white on red') # Switch button to 'Disable Output!'
                 window["-ENABLE PROMPT-"].update('Output Enabled.')
             else:
                 if secondary_daq != None:
                     hdawg.awg_disable(secondary_daq, secondary_device) 
+                    window.refresh()
                 if primary_daq != None:
                     hdawg.awg_disable(primary_daq, primary_device)
+                    window.refresh()
                 window["-ENABLE-"].update('Enable Output', button_color = 'white on green') # Switch button to 'Enable Output!'
                 window["-ENABLE PROMPT-"].update('')
 
