@@ -8,6 +8,14 @@ import os.path
 import matplotlib.pyplot as plt
 from matplotlib.backends.backend_tkagg import FigureCanvasTkAgg
 import numpy as np
+from sys import platform
+
+if platform == "linux" or platform == "linux2":
+    dpi = 40
+elif platform == "darwin":
+    dpi = 40
+elif platform == "win32" or platform == "win64":
+    dpi = 80
 
 # Set global values
 deviceIds = ['dev8310', 'dev8259'] # HDAWG serial numbers
@@ -29,7 +37,7 @@ def create_plot(array): # Function that generates preview plot from 2D array usi
     ax = plt.gca()
     ax.cla()    # Clear the current axes
     ax.grid()   # Enable Grid
-    plt.figure(figsize=(8, 6.5), dpi=40, facecolor = '#25292E')
+    plt.figure(figsize=(8, 6.5), dpi=dpi, facecolor = '#25292E')
     for i in range(numCols):    # Create zero order hold plot of each column
         current_color = ['b', 'g', 'r', 'c', 'm','y','k']   # Vary Colors of each wave
         plt.step(np.linspace(0,len(array[:,i]),len(array[:,i]), endpoint = False), array[:,i], color=current_color[i%7], marker='o',
