@@ -308,13 +308,17 @@ while True:
 
             elif frequencyFlag == False and aliasingFlag == False:   # No flags raised
                     print('Programming... Please Wait.')
-                    window.refresh()    
+                    window.refresh() 
+                    print('Interpolating Waveform Array...')   
+                    window.refresh() 
                     array = create_interp_array(filename,compute_frequency(frequency),compute_sample_rate())
                     primary_daq, primary_device = hdawg.configure_api(primary_device_id)    # Establish connection to local server Zurich LabOne API
+                    window.refresh()
                     channel_grouping = 2    # Initialize channel grouping to 1 x 8 (cores x channels)
                     
                     if secondary_device_id != 'None':
                         secondary_daq, secondary_device = hdawg.configure_api(secondary_device_id)  # Establish connection to the same local server using Zurich LabOne API
+                        window.refresh()
                         if secondary_daq != None:   
                             secondary_exp_setting = hdawg.generate_settings(secondary_device, array, sampleRate, use = 'secondary',
                                 trigger = sync_trigger, trigger_channel = sync_trigger_channel, channel_grouping = channel_grouping)  # Generate list of settings 
