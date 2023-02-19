@@ -196,7 +196,8 @@ file_list_column = [    # Left half of GUI structure
 ]
 
 plot_column = [
-    [sg.Canvas(size=(650, 650), key='-CANVAS-')]
+    [sg.Canvas(size=(650, 450), key='-CANVAS-')],
+    [sg.Output(size=(100, 10))]
 ]
 
 # ----- Full layout -----
@@ -210,7 +211,7 @@ layout = [
 
 # ---- Program Window ----
 window = sg.Window("AWG GUI by Richard McManus (2023)", layout, finalize=True,
-    element_justification='center', resizable=True)
+    element_justification='center', resizable=False)
 
 # ----- Initialize Global Veriables needed for event loop -----
 frequency = 1e6
