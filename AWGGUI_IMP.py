@@ -35,10 +35,10 @@ def create_plot(array): # Function that generates preview plot from 2D array usi
         current_color = ['b', 'g', 'r', 'c', 'm','y','k']   # Vary Colors of each wave
         plt.step(np.linspace(0,len(array[:,i]),len(array[:,i]), endpoint = False), array[:,i], color=current_color[i%7], marker='o',
             markersize = 1, linewidth = 0.75) # Plot
-    plt.title(os.path.basename(filename), fontsize=12, color='white') # Title plot with name of csv file
-    plt.tick_params(axis='both', labelsize=6, color='white', labelcolor='white')   
-    plt.xlabel('Index', fontsize=8, color='white')
-    plt.ylabel('Magnitude', fontsize=8, color='white')
+    plt.title(os.path.basename(filename), fontsize=18, color='white') # Title plot with name of csv file
+    plt.tick_params(axis='both', labelsize=10, color='white', labelcolor='white')   
+    plt.xlabel('Index', fontsize=14, color='white')
+    plt.ylabel('Magnitude', fontsize=14, color='white')
     plt.grid(True)
     return plt.gcf()    
 
@@ -107,76 +107,81 @@ def draw_figure(canvas, figure): # Initializes figure for plot
 sg.theme('Dark Grey 14')
 
 file_list_column = [    # Left half of GUI structure
-    [sg.Image('FMCtoEdge.png')],
-    [sg.HSeparator()],
-    [
-        sg.Text("Folder"),  
-        sg.In(size=(25, 1), enable_events=True, key="-FOLDER-"),
-        sg.FolderBrowse(),
+    [   
+        sg.Column([
+            [sg.Image('FMCtoEdge.png')],
+            [sg.HSeparator()],
+            [
+                sg.Text("Folder"),  
+                sg.In(size=(25, 1), enable_events=True, key="-FOLDER-"),
+                sg.FolderBrowse()
+            ],
+            [sg.Listbox(values=[], enable_events=True, size=(40, 20), key="-FILE LIST-")]
+        ], element_justification='center')
     ],
-    [
-        sg.Listbox(
-            values=[], enable_events=True, size=(40, 20), key="-FILE LIST-"
-        )
-    ],
-    [
-        sg.Text("Sample Rate"),
-        sg.Combo(
-            sampleRates, enable_events=True, size=(15,1),readonly=True,
-            default_value=sampleRates[0], key="-SAMPLE RATE-"),
-    ],
-    [
-        sg.Text("Frequency    "),
-        sg.In(1, enable_events=True, size=(17,1), key="-FREQUENCY-"),
-        sg.Combo(units, enable_events=True, size=(4,1), readonly=True,
-            default_value = units[1], key="-FREQUENCY UNITS-")
+    [   
+        sg.Column([
+            [sg.Text("Sample Rate")],
+            [sg.Text("Frequency")],
+        ], element_justification='left'),
+        sg.Column([
+            [sg.Combo(
+                sampleRates, enable_events=True, size=(15,1),readonly=True,
+                default_value=sampleRates[0], key="-SAMPLE RATE-")],
+            [
+                sg.In(1, enable_events=True, size=(17,1), key="-FREQUENCY-"),
+                sg.Combo(units, enable_events=True, size=(4,1), readonly=True,
+                    default_value = units[1], key="-FREQUENCY UNITS-")]
+        ], element_justification='left')
     ],
     [sg.VPush()],
-    [sg.Button('Update Graph', key="-UPDATE-",size=(30,1),expand_x = True,
+    [sg.Button('Update Graph', key="-UPDATE-",expand_x = True,
         expand_y = True)
     ],
     [sg.Text("")],
     [sg.VPush()],
     [
-        sg.Text("Primary Device ID         "),
-        sg.Combo(
-            deviceIds, enable_events=True, size=(15,1),readonly=True,
-            default_value=deviceIds[0], key="-PRIMARY DEVICE ID-"
-        )
+        sg.Column([
+            [sg.Text("Primary Device ID")],
+            [sg.Text("Secondary Device ID")],
+            [sg.Text("Wave Count")],
+        ], element_justification='left'),
+        sg.Column([
+            [sg.Combo(
+                deviceIds, enable_events=True, size=(15,1),readonly=True,
+                default_value=deviceIds[0], key="-PRIMARY DEVICE ID-")
+            ],
+            [sg.Combo(
+                secondaryDeviceIds, enable_events=True, size=(15,1),readonly=True,
+                default_value=secondaryDeviceIds[2], key="-SECONDARY DEVICE ID-")
+            ],
+            [sg.Combo(
+                waveCounts, enable_events=True, size=(15,1),
+                default_value=waveCounts[0], key="-WAVE COUNT-")
+            ],
+        ], element_justification='left')
     ],
     [
-        sg.Text("Secondary Device ID    "),
-        sg.Combo(
-            secondaryDeviceIds, enable_events=True, size=(15,1),readonly=True,
-            default_value=secondaryDeviceIds[2], key="-SECONDARY DEVICE ID-"
-        )
-    ],
-    [
-        sg.Text("Wave Count                 "),
-        sg.Combo(
-            waveCounts, enable_events=True, size=(15,1),
-            default_value=waveCounts[0], key="-WAVE COUNT-"
-        )
-    ],
-        [
-        sg.Text("Sync Trigger   "),
-        sg.Combo(
-            triggers, enable_events=True, size=(8,1), readonly = True,
-            default_value=triggers[4], key="-SYNC TRIGGER-"
-        ),
-        sg.Text("Channel"),
-        sg.Combo(triggerChannels, enable_events=True, size=(4,1), readonly=True,
-            default_value = triggerChannels[0], key="-SYNC TRIGGER CHANNEL-")
-    ],
-    [
-        sg.Text("Enable Trigger"),
-        sg.Combo(
-            triggers, enable_events=True, size=(8,1), readonly = True,
-            default_value=triggers[4], key="-ENABLE TRIGGER-"
-        ),
-        sg.Text("Channel"),
-        sg.Combo(triggerChannels, enable_events=True, size=(4,1), readonly=True,
-            default_value = triggerChannels[0], key="-ENABLE TRIGGER CHANNEL-")
+        sg.Column([
+            [sg.Text("Sync Trigger")],
+            [sg.Text("Enable Trigger")]
+        ], element_justification='left'),
+        sg.Column([
+            [sg.Combo(
+                triggers, enable_events=True, size=(8,1), readonly = True,
+                default_value=triggers[4], key="-SYNC TRIGGER-"),
+            sg.Text("Channel"),
+            sg.Combo(triggerChannels, enable_events=True, size=(4,1), readonly=True,
+                default_value = triggerChannels[0], key="-SYNC TRIGGER CHANNEL-")
+            ],
+            [sg.Combo(
+                triggers, enable_events=True, size=(8,1), readonly = True,
+                default_value=triggers[4], key="-ENABLE TRIGGER-"),
+                sg.Text("Channel"),
+                sg.Combo(triggerChannels, enable_events=True, size=(4,1), readonly=True,
+                    default_value = triggerChannels[0], key="-ENABLE TRIGGER CHANNEL-")
+            ]
+        ], element_justification='left')
     ],
     [sg.VPush()],
     [sg.Button('Program', button_color='white on green', key="-PROGRAM-",size=(30,1),expand_x = True,
