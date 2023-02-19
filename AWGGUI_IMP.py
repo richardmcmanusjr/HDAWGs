@@ -116,7 +116,7 @@ file_list_column = [    # Left half of GUI structure
                 sg.In(size=(25, 1), enable_events=True, key="-FOLDER-"),
                 sg.FolderBrowse()
             ],
-            [sg.Listbox(values=[], enable_events=True, size=(40, 20), key="-FILE LIST-")]
+            [sg.Listbox(values=[], enable_events=True, size=(40, 10), key="-FILE LIST-")]
         ], element_justification='center')
     ],
     [   
