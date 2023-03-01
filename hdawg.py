@@ -5,8 +5,9 @@ import zhinst.utils
 import time
 
 def rotateWave(arr,d,n):
-    arr[0,:]=arr[0,d:n]+arr[0,0:d]
-    return arr
+    temp_arr = arr[d:n]
+    temp_arr = np.append(temp_arr,arr[0:d])
+    return temp_arr
 
 def configure_api(
     device_id,
@@ -152,7 +153,7 @@ def generate_awg_program(array, awgModule, use = 'primary', trigger = '4', trigg
         csv_file = os.path.join(wave_dir, "wave" + str(i) + ".csv")
         current_wave = array[:, i + offset]
         if sync_offset != 0:
-            current_wave = rotateWave(current_wave, sync_offset, len(current_wave))            
+            current_wave = rotateWave(current_wave, int(sync_offset), len(current_wave))            
         np.savetxt(csv_file, current_wave)
         awg_program = awg_program + textwrap.dedent(
             """\

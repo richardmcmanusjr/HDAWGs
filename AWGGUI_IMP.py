@@ -30,7 +30,7 @@ trigger = triggers[4] # Default trigger is 'None'
 triggerChannels = [1,2,3,4,5,6,7,8] # List of trigger channels
 trigger_channel = triggerChannels[0] # Default Trigger Channel is 1
 units = ['GHz', 'MHz', 'kHz', 'Hz'] # List of frequency units
-sync_offset_time = 1.5*10^-9 #Offset to account for discrete number of HDAWG Sequencer Clock Cycles
+sync_offset_time = 1.5e-9 #Offset to account for discrete number of HDAWG Sequencer Clock Cycles
 firstTime = True
 
 def create_plot(array): # Function that generates preview plot from 2D array using matplotlib.pyplot
@@ -338,8 +338,12 @@ while True:
                         if secondary_daq != None:   
                             secondary_exp_setting = hdawg.generate_settings(secondary_device, array, sampleRate, use = 'secondary',
                                 trigger = sync_trigger, trigger_channel = sync_trigger_channel, channel_grouping = channel_grouping)  # Generate list of settings 
+                            print('Generating settings for ' + secondary_device)
+                            window.refresh() 
                             hdawg.set_awg_settings(secondary_daq, secondary_exp_setting)    # Program HDAWG with settings
                             secondary_awgModule = hdawg.initiate_AWG(secondary_daq, secondary_device) # Initialize awgModule 
+                            print('Generating sequence for ' + secondary_device)
+                            window.refresh()                            
                             secondary_awg_program = hdawg.generate_awg_program(array, secondary_awgModule, use = 'secondary', # Generate program for single HDAWG
                                 trigger = sync_trigger, trigger_channel = sync_trigger_channel, count = wave_count, sync_offset = sync_offset)
                             hdawg.run_awg_program(secondary_daq, secondary_device, secondary_awgModule, secondary_awg_program)  # Program single HDAWG with awg program
@@ -347,8 +351,12 @@ while True:
                     if primary_daq != None:
                         primary_exp_setting = hdawg.generate_settings(primary_device, array, sampleRate, use = 'primary',
                             trigger = enable_trigger, trigger_channel = enable_trigger_channel, channel_grouping = channel_grouping)  # Generate list of settings 
+                        print('Generating settings for ' + primary_device)
+                        window.refresh()
                         hdawg.set_awg_settings(primary_daq, primary_exp_setting)    # Program HDAWG with settings
                         primary_awgModule = hdawg.initiate_AWG(primary_daq, primary_device) # Initialize awgModule 
+                        print('Generating sequence for ' + secondary_device)
+                        window.refresh()                        
                         primary_awg_program = hdawg.generate_awg_program(array, primary_awgModule, use = 'primary', # Generate program for single HDAWG
                             trigger = enable_trigger, trigger_channel = enable_trigger_channel, marker = sync_trigger_channel, count = wave_count)
                         hdawg.run_awg_program(primary_daq, primary_device, primary_awgModule, primary_awg_program)  # Program single HDAWG with awg program
