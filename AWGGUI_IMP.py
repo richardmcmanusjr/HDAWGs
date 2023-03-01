@@ -355,7 +355,7 @@ while True:
                         window.refresh()
                         hdawg.set_awg_settings(primary_daq, primary_exp_setting)    # Program HDAWG with settings
                         primary_awgModule = hdawg.initiate_AWG(primary_daq, primary_device) # Initialize awgModule 
-                        print('Generating sequence for ' + secondary_device)
+                        print('Generating sequence for ' + primary_device)
                         window.refresh()                        
                         primary_awg_program = hdawg.generate_awg_program(array, primary_awgModule, use = 'primary', # Generate program for single HDAWG
                             trigger = enable_trigger, trigger_channel = enable_trigger_channel, marker = sync_trigger_channel, count = wave_count)
