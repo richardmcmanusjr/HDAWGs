@@ -30,6 +30,7 @@ trigger = triggers[4] # Default trigger is 'None'
 triggerChannels = [1,2,3,4,5,6,7,8] # List of trigger channels
 trigger_channel = triggerChannels[0] # Default Trigger Channel is 1
 units = ['GHz', 'MHz', 'kHz', 'Hz'] # List of frequency units
+sync_offset_time = 1.5*10^-9 #Offset to account for discrete number of HDAWG Sequencer Clock Cycles
 firstTime = True
 
 def create_plot(array): # Function that generates preview plot from 2D array using matplotlib.pyplot
@@ -51,7 +52,7 @@ def create_plot(array): # Function that generates preview plot from 2D array usi
 
 def create_interp_array(filename, frequency, sampleRate):   # Function that loads a csv file and interpolates sample points to achieve desired frequency from specified sample rate
     array = np.loadtxt(filename, delimiter=",") # Load csv file into array
-    numCols = len(array[0]) # 2 columns in your example
+    numCols = len(array[0])
     magnitude = [] # Initialize list for y coordinates
     for i in range(numCols): # Interpolate each column/waveform
         time = np.linspace(0, len(array[:,i]), int(sampleRate/frequency), endpoint = True)
@@ -105,6 +106,12 @@ def compute_wave_count(wave_count):
         except:
             waveCountFlag = True # Raise waveCountFlag if wave count input is not an int
     return wave_count
+
+def compute_sync_offset(sync_offset_time, frequency, sampleRate): # Computes number of sample clock cycles to offset second AWG for sync
+    delta_t = 1/sampleRate
+    sync_offset = delta_t/sync_offset_time
+    return sync_offset
+
 def draw_figure(canvas, figure): # Initializes figure for plot
     figure_canvas_agg = FigureCanvasTkAgg(figure, canvas)
     figure_canvas_agg.draw()
@@ -320,6 +327,7 @@ while True:
                     print('Interpolating Waveform Array...')   
                     window.refresh() 
                     array = create_interp_array(filename,compute_frequency(frequency),compute_sample_rate())
+                    sync_offset = compute_sync_offset(sync_offset_time, frequency, sampleRate)
                     primary_daq, primary_device = hdawg.configure_api(primary_device_id)    # Establish connection to local server Zurich LabOne API
                     window.refresh()
                     channel_grouping = 2    # Initialize channel grouping to 1 x 8 (cores x channels)
@@ -333,7 +341,7 @@ while True:
                             hdawg.set_awg_settings(secondary_daq, secondary_exp_setting)    # Program HDAWG with settings
                             secondary_awgModule = hdawg.initiate_AWG(secondary_daq, secondary_device) # Initialize awgModule 
                             secondary_awg_program = hdawg.generate_awg_program(array, secondary_awgModule, use = 'secondary', # Generate program for single HDAWG
-                                trigger = sync_trigger, trigger_channel = sync_trigger_channel, count = wave_count)
+                                trigger = sync_trigger, trigger_channel = sync_trigger_channel, count = wave_count, sync_offset = sync_offset)
                             hdawg.run_awg_program(secondary_daq, secondary_device, secondary_awgModule, secondary_awg_program)  # Program single HDAWG with awg program
                             window.refresh()
                     if primary_daq != None:

@@ -4,6 +4,10 @@ import os
 import zhinst.utils
 import time
 
+def rotateWave(arr,d,n):
+    arr[0,:]=arr[0,d:n]+arr[0,0:d]
+    return arr
+
 def configure_api(
     device_id,
     server_host: str = "localhost",
@@ -117,7 +121,7 @@ def initiate_mds(daq, device_1, device_2):
     time.sleep(0.2)
     return mds
 
-def generate_awg_program(array, awgModule, use = 'primary', trigger = '4', trigger_channel = 1, marker = None, count = 'Infinite'):
+def generate_awg_program(array, awgModule, use = 'primary', trigger = '4', trigger_channel = 1, marker = None, count = 'Infinite', sync_offset = 0):
     data_dir = awgModule.getString("directory")
     wave_dir = os.path.join(data_dir, "awg", "waves")
     if not os.path.isdir(wave_dir):
@@ -138,6 +142,7 @@ def generate_awg_program(array, awgModule, use = 'primary', trigger = '4', trigg
     index = None
     offset = None
     if use == 'primary':
+        sync_offset = 0
         index = min(8,numCols)
         offset = - 1
     else:
@@ -145,7 +150,10 @@ def generate_awg_program(array, awgModule, use = 'primary', trigger = '4', trigg
         offset = 7
     for i in range(1, index + 1, 1):
         csv_file = os.path.join(wave_dir, "wave" + str(i) + ".csv")
-        np.savetxt(csv_file, array[:, i + offset])
+        current_wave = array[:, i + offset]
+        if sync_offset != 0:
+            current_wave = rotateWave(current_wave, sync_offset, len(current_wave))            
+        np.savetxt(csv_file, current_wave)
         awg_program = awg_program + textwrap.dedent(
             """\
             wave w""" + str(i) + """ = "wave""" + str(i) + """";
