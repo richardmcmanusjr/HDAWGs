@@ -175,7 +175,7 @@ def generate_awg_program(array, awgModule, use = 'primary', trigger = '4', trigg
         awg_program = awg_program + textwrap.dedent(
         """\
         setTrigger(""" + marker_binary + """);
-        wait(46);
+        wait(45);
         setTrigger(0);
         """
         )

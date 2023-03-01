@@ -30,7 +30,7 @@ trigger = triggers[4] # Default trigger is 'None'
 triggerChannels = [1,2,3,4,5,6,7,8] # List of trigger channels
 trigger_channel = triggerChannels[0] # Default Trigger Channel is 1
 units = ['GHz', 'MHz', 'kHz', 'Hz'] # List of frequency units
-sync_offset_time = 1.5e-9 #Offset to account for discrete number of HDAWG Sequencer Clock Cycles
+sync_offset_time = 3.4e-9 #Offset to account for discrete number of HDAWG Sequencer Clock Cycles
 firstTime = True
 
 def create_plot(array): # Function that generates preview plot from 2D array using matplotlib.pyplot
@@ -109,7 +109,7 @@ def compute_wave_count(wave_count):
 
 def compute_sync_offset(sync_offset_time, frequency, sampleRate): # Computes number of sample clock cycles to offset second AWG for sync
     delta_t = 1/sampleRate
-    sync_offset = delta_t/sync_offset_time
+    sync_offset = sync_offset_time/delta_t
     return sync_offset
 
 def draw_figure(canvas, figure): # Initializes figure for plot
@@ -328,6 +328,7 @@ while True:
                     window.refresh() 
                     array = create_interp_array(filename,compute_frequency(frequency),compute_sample_rate())
                     sync_offset = compute_sync_offset(sync_offset_time, frequency, sampleRate)
+                    print(sync_offset)
                     primary_daq, primary_device = hdawg.configure_api(primary_device_id)    # Establish connection to local server Zurich LabOne API
                     window.refresh()
                     channel_grouping = 2    # Initialize channel grouping to 1 x 8 (cores x channels)
