@@ -30,8 +30,11 @@ trigger = triggers[4] # Default trigger is 'None'
 triggerChannels = [1,2,3,4,5,6,7,8] # List of trigger channels
 trigger_channel = triggerChannels[0] # Default Trigger Channel is 1
 units = ['GHz', 'MHz', 'kHz', 'Hz'] # List of frequency units
-sync_offset_time = 3.4e-9 #Offset to account for discrete number of HDAWG Sequencer Clock Cycles
+sample_clk_offset_time = 3.4e-9 #Offset to account for discrete number of HDAWG Sequencer Clock Cycles
+seq_clk_offset_time = 45*3.3e-9
+
 firstTime = True
+sampleRate = 2.4e9
 
 def create_plot(array): # Function that generates preview plot from 2D array using matplotlib.pyplot
     numCols = len(array[0]) # Number of waves to be plotted
@@ -107,10 +110,18 @@ def compute_wave_count(wave_count):
             waveCountFlag = True # Raise waveCountFlag if wave count input is not an int
     return wave_count
 
-def compute_sync_offset(sync_offset_time, frequency, sampleRate): # Computes number of sample clock cycles to offset second AWG for sync
+def compute_sample_clk_offset(sampleRate): # Computes number of sample clock cycles to offset second AWG for sync
+    global sample_clk_offset_time
+    sample_clk_offset_time = values['-SAMPLE CLOCK OFFSET-']
     delta_t = 1/sampleRate
-    sync_offset = sync_offset_time/delta_t
-    return sync_offset
+    sample_clock_offset = sample_clk_offset_time/delta_t
+    return sample_clock_offset
+
+def compute_seq_clk_offset(): # Computes number of sequence clock cycles to offset second AWG for sync
+    global seq_clk_offset_time
+    seq_clk_offset_time = values['-SEQUENCE CLOCK OFFSET-']
+    seq_clk_offset = seq_clk_offset_time/(3.3e-9) # Sequence clock time base is 3.3e-9
+    return seq_clk_offset
 
 def draw_figure(canvas, figure): # Initializes figure for plot
     figure_canvas_agg = FigureCanvasTkAgg(figure, canvas)
@@ -216,12 +227,47 @@ plot_column = [
     [sg.Output(size=(100, 10))]
 ]
 
-# ----- Full layout -----
-layout = [
+settings_column = [
+    [sg.Text("", size=(10,2))],
+    [sg.Text("Settings", size=(10,1), font = ("Helvetica", 30), expand_x = True, justification = 'center')],
+    [sg.HSeparator()],
+    [sg.Text("", size=(10,5))],
+    [
+        sg.Text("Total Sync Offset: ", size=(20,1), expand_x = True, justification = 'left'),
+        sg.Text(f'{seq_clk_offset_time + sample_clk_offset_time:.3e}', enable_events=True, size=(15,1),
+         background_color='#1E2125',key="-TOTAL SYNC OFFSET-")
+    ],
+    [sg.HSeparator()],
+    [sg.Text("", size=(10,1))],
+    [sg.Text("Sample Clock Offset: ", size=(20,1), expand_x = True, justification = 'left')],
+    [sg.Slider(key="-SAMPLE CLOCK OFFSET-", enable_events=True, size=(40,9), range=(0, 10e-9), default_value = sample_clk_offset_time, resolution = 1/sampleRate, orientation = 'horizontal')],
+    [sg.Text("Sequence Clock Offset: ", size=(20,1), expand_x = True, justification = 'left')],
+    [sg.Slider(key="-SEQUENCE CLOCK OFFSET-", enable_events=True, size=(40,9), range=(0, 200e-9), default_value = seq_clk_offset_time, resolution = 3.3e-9, orientation = 'horizontal')]
+]
+
+tab1_layout = [  
     [
         sg.Column(file_list_column),
         sg.VSeperator(),
         sg.Column(plot_column, element_justification='center')
+    ]
+]
+
+tab2_layout = [  
+    [
+        sg.Column(settings_column, element_justification='center')
+    ]
+]
+
+# ----- Full layout -----
+layout = [
+    [
+        sg.TabGroup([
+            [
+                sg.Tab('Control Panel', tab1_layout),
+                sg.Tab('Settings', tab2_layout, element_justification='center')
+            ]
+        ])
     ]
 ]
 
@@ -292,6 +338,12 @@ while True:
             else:
                 sg.popup('Select File.', 'File must be selected to update graph.')
         
+    if event == "-SEQUENCE CLOCK OFFSET-" or event == "-SAMPLE CLOCK OFFSET-":
+        compute_seq_clk_offset()
+        compute_sample_clk_offset(sampleRate)
+        total_offset = sample_clk_offset_time + seq_clk_offset_time
+        window["-TOTAL SYNC OFFSET-"].update(f'{total_offset:.3e}')
+
     # Programs sequence and sends to HDAWGs 
     if event == "-PROGRAM-":
         if window["-PROGRAM-"].get_text() == 'Program':   # Current event is to generate and program
@@ -327,8 +379,8 @@ while True:
                     print('Interpolating Waveform Array...')   
                     window.refresh() 
                     array = create_interp_array(filename,compute_frequency(frequency),compute_sample_rate())
-                    sync_offset = compute_sync_offset(sync_offset_time, frequency, sampleRate)
-                    print(sync_offset)
+                    sample_clock_offset = compute_sample_clk_offset(sampleRate)
+                    seq_clk_offset = compute_seq_clk_offset()
                     primary_daq, primary_device = hdawg.configure_api(primary_device_id)    # Establish connection to local server Zurich LabOne API
                     window.refresh()
                     channel_grouping = 2    # Initialize channel grouping to 1 x 8 (cores x channels)
@@ -346,7 +398,7 @@ while True:
                             print('Generating sequence for ' + secondary_device)
                             window.refresh()                            
                             secondary_awg_program = hdawg.generate_awg_program(array, secondary_awgModule, use = 'secondary', # Generate program for single HDAWG
-                                trigger = sync_trigger, trigger_channel = sync_trigger_channel, count = wave_count, sync_offset = sync_offset)
+                                trigger = sync_trigger, trigger_channel = sync_trigger_channel, count = wave_count, sample_clock_offset = sample_clock_offset)
                             hdawg.run_awg_program(secondary_daq, secondary_device, secondary_awgModule, secondary_awg_program)  # Program single HDAWG with awg program
                             window.refresh()
                     if primary_daq != None:
@@ -359,7 +411,7 @@ while True:
                         print('Generating sequence for ' + primary_device)
                         window.refresh()                        
                         primary_awg_program = hdawg.generate_awg_program(array, primary_awgModule, use = 'primary', # Generate program for single HDAWG
-                            trigger = enable_trigger, trigger_channel = enable_trigger_channel, marker = sync_trigger_channel, count = wave_count)
+                            trigger = enable_trigger, trigger_channel = enable_trigger_channel, marker = sync_trigger_channel, count = wave_count, seq_clock_offset=seq_clk_offset)
                         hdawg.run_awg_program(primary_daq, primary_device, primary_awgModule, primary_awg_program)  # Program single HDAWG with awg program
                         window.refresh()
                     window["-PROGRAM-"].update('Reset!', button_color = 'white on red') # Switch button to 'Reset!'
