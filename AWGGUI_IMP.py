@@ -31,7 +31,7 @@ triggerChannels = [1,2,3,4,5,6,7,8] # List of trigger channels
 trigger_channel = triggerChannels[0] # Default Trigger Channel is 1
 units = ['GHz', 'MHz', 'kHz', 'Hz'] # List of frequency units
 sampleRate = 2.4e9
-sample_clk_offset_time = 3.7e-9 #Offset to account for discrete number of HDAWG Sequencer Clock Cycles
+sample_clk_offset_time = 8/sampleRate #Offset to account for discrete number of HDAWG Sequencer Clock Cycles
 seq_clk_offset_time = 46/(sampleRate/8) # Sequence Clock Frequency is sampleRate/8
 firstTime = True
 
@@ -112,15 +112,14 @@ def compute_wave_count(wave_count):
 def compute_sample_clk_offset(sampleRate): # Computes number of sample clock cycles to offset second AWG for sync
     global sample_clk_offset_time
     sample_clk_offset_time = values['-SAMPLE CLOCK OFFSET-']
-    delta_t = 1/sampleRate
-    sample_clk_offset = sample_clk_offset_time/delta_t
-    return int(sample_clk_offset)
+    sample_clk_offset = sample_clk_offset_time*sampleRate
+    return round(sample_clk_offset)
 
 def compute_seq_clk_offset(): # Computes number of sequence clock cycles to offset second AWG for sync
     global seq_clk_offset_time
     seq_clk_offset_time = values['-SEQUENCE CLOCK OFFSET-']
-    seq_clk_offset = seq_clk_offset_time/(sampleRate/8) # Sequence clock time base is sampleRate/8
-    return int(seq_clk_offset)
+    seq_clk_offset = seq_clk_offset_time*(sampleRate/8) # Sequence clock time base is sampleRate/8
+    return round(seq_clk_offset)
 
 def draw_figure(canvas, figure): # Initializes figure for plot
     figure_canvas_agg = FigureCanvasTkAgg(figure, canvas)
@@ -233,18 +232,28 @@ settings_column = [
     [sg.Text("", size=(10,5))],
     [
         sg.Text("Total Sync Offset: ", size=(20,1), expand_x = True, justification = 'left'),
+        sg.Text("Seconds: ", size=(7,1)),        
         sg.Text(f'{seq_clk_offset_time + sample_clk_offset_time:.3e}', enable_events=True, size=(15,1),
-         background_color='#1E2125',key="-TOTAL SYNC OFFSET-")
+            background_color='#1E2125',key="-TOTAL SYNC OFFSET-")
     ],
     [sg.HSeparator()],
     [sg.Text("", size=(10,1))],
     [
         sg.Text("Sample Clock Offset: ", size=(20,1), expand_x = True, justification = 'left'),
-        sg.Text(str(int(compute_sample_clk_offset(sampleRate))), enable_events=True, size=(15,1),
-         background_color='#1E2125', key="-SAMPLE CLOCK OFFSET TEXT-")
+        sg.Text("Cycles: ", size=(5,1)),
+        sg.Text(round(sample_clk_offset_time*sampleRate), enable_events=True, size=(15,1),
+            background_color='#1E2125', key="-SAMPLE CLOCK OFFSET TEXT-")
     ],
+    [sg.Text("", size=(10,1))],
     [sg.Slider(key="-SAMPLE CLOCK OFFSET-", enable_events=True, size=(40,9), range=(0, 10e-9), default_value = sample_clk_offset_time, resolution = 1/sampleRate, orientation = 'horizontal')],
-    [sg.Text("Sequence Clock Offset: ", size=(20,1), expand_x = True, justification = 'left')],
+    [sg.Text("", size=(10,1))],
+    [
+        sg.Text("Sequence Clock Offset: ", size=(20,1), expand_x = True, justification = 'left'),
+        sg.Text("Cycles: ", size=(5,1)),
+        sg.Text(round(seq_clk_offset_time*(sampleRate/8)), enable_events=True, size=(15,1),
+            background_color='#1E2125', key="-SEQUENCE CLOCK OFFSET TEXT-")
+    ],
+    [sg.Text("", size=(10,1))],
     [sg.Slider(key="-SEQUENCE CLOCK OFFSET-", enable_events=True, size=(40,9), range=(0, 200e-9), default_value = seq_clk_offset_time, resolution = 3.3e-9, orientation = 'horizontal')]
 ]
 
@@ -345,8 +354,8 @@ while True:
                 sg.popup('Select File.', 'File must be selected to update graph.')
         
     if event == "-SEQUENCE CLOCK OFFSET-" or event == "-SAMPLE CLOCK OFFSET-":
-        compute_seq_clk_offset()
-        compute_sample_clk_offset(sampleRate)
+        window["-SEQUENCE CLOCK OFFSET TEXT-"].update(compute_seq_clk_offset())
+        window["-SAMPLE CLOCK OFFSET TEXT-"].update(compute_sample_clk_offset(sampleRate))
         total_offset = sample_clk_offset_time + seq_clk_offset_time
         window["-TOTAL SYNC OFFSET-"].update(f'{total_offset:.3e}')
 
@@ -387,8 +396,6 @@ while True:
                     array = create_interp_array(filename,compute_frequency(frequency),compute_sample_rate())
                     sample_clk_offset = compute_sample_clk_offset(sampleRate)
                     seq_clk_offset = compute_seq_clk_offset()
-                    print(sample_clk_offset)
-                    print(seq_clk_offset)
                     primary_daq, primary_device = hdawg.configure_api(primary_device_id)    # Establish connection to local server Zurich LabOne API
                     window.refresh()
                     channel_grouping = 2    # Initialize channel grouping to 1 x 8 (cores x channels)
