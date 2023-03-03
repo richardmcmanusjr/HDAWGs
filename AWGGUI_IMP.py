@@ -32,7 +32,7 @@ trigger_channel = triggerChannels[0] # Default Trigger Channel is 1
 units = ['GHz', 'MHz', 'kHz', 'Hz'] # List of frequency units
 sampleRate = 2.4e9
 sample_clk_offset_time = 3.7e-9 #Offset to account for discrete number of HDAWG Sequencer Clock Cycles
-seq_clk_offset_time = 46*3.3e-9
+seq_clk_offset_time = 46/(sampleRate/8) # Sequence Clock Frequency is sampleRate/8
 firstTime = True
 
 def create_plot(array): # Function that generates preview plot from 2D array using matplotlib.pyplot
@@ -119,7 +119,7 @@ def compute_sample_clk_offset(sampleRate): # Computes number of sample clock cyc
 def compute_seq_clk_offset(): # Computes number of sequence clock cycles to offset second AWG for sync
     global seq_clk_offset_time
     seq_clk_offset_time = values['-SEQUENCE CLOCK OFFSET-']
-    seq_clk_offset = seq_clk_offset_time/(3.3e-9) # Sequence clock time base is 3.3e-9
+    seq_clk_offset = seq_clk_offset_time/(sampleRate/8) # Sequence clock time base is sampleRate/8
     return int(seq_clk_offset)
 
 def draw_figure(canvas, figure): # Initializes figure for plot
@@ -238,7 +238,11 @@ settings_column = [
     ],
     [sg.HSeparator()],
     [sg.Text("", size=(10,1))],
-    [sg.Text("Sample Clock Offset: ", size=(20,1), expand_x = True, justification = 'left')],
+    [
+        sg.Text("Sample Clock Offset: ", size=(20,1), expand_x = True, justification = 'left'),
+        sg.Text(str(int(compute_sample_clk_offset(sampleRate))), enable_events=True, size=(15,1),
+         background_color='#1E2125', key="-SAMPLE CLOCK OFFSET TEXT-")
+    ],
     [sg.Slider(key="-SAMPLE CLOCK OFFSET-", enable_events=True, size=(40,9), range=(0, 10e-9), default_value = sample_clk_offset_time, resolution = 1/sampleRate, orientation = 'horizontal')],
     [sg.Text("Sequence Clock Offset: ", size=(20,1), expand_x = True, justification = 'left')],
     [sg.Slider(key="-SEQUENCE CLOCK OFFSET-", enable_events=True, size=(40,9), range=(0, 200e-9), default_value = seq_clk_offset_time, resolution = 3.3e-9, orientation = 'horizontal')]
@@ -324,6 +328,9 @@ while True:
     
     if event == "-ENABLE TRIGGER-":
         enable_trigger = triggers.index(values["-ENABLE TRIGGER-"])
+
+    if event == "-SAMPLE RATE-":
+        sampleRate = compute_sample_rate()
 
     # Updates plot
     if event == "-UPDATE-":
