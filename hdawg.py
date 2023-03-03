@@ -92,7 +92,7 @@ def initiate_AWG(daq, device):
     awgModule.execute()
     return awgModule
 
-def generate_awg_program(array, awgModule, use = 'primary', trigger = '4', trigger_channel = 1, marker = None, count = 'Infinite', seq_clock_offset = 0, sample_clock_offset = 0):
+def generate_awg_program(array, awgModule, use = 'primary', trigger = '4', trigger_channel = 1, marker = None, count = 'Infinite', seq_clk_offset = 0, sample_clk_offset = 0):
     data_dir = awgModule.getString("directory")
     wave_dir = os.path.join(data_dir, "awg", "waves")
     if not os.path.isdir(wave_dir):
@@ -113,7 +113,7 @@ def generate_awg_program(array, awgModule, use = 'primary', trigger = '4', trigg
     index = None
     offset = None
     if use == 'primary':
-        sample_clock_offset = 0
+        sample_clk_offset = 0
         index = min(8,numCols)
         offset = - 1
     else:
@@ -122,8 +122,8 @@ def generate_awg_program(array, awgModule, use = 'primary', trigger = '4', trigg
     for i in range(1, index + 1, 1):
         csv_file = os.path.join(wave_dir, "wave" + str(i) + ".csv")
         current_wave = array[:, i + offset]
-        if sample_clock_offset != 0:
-            current_wave = rotateWave(current_wave, int(sample_clock_offset), len(current_wave))            
+        if sample_clk_offset != 0:
+            current_wave = rotateWave(current_wave, int(sample_clk_offset), len(current_wave))            
         np.savetxt(csv_file, current_wave)
         awg_program = awg_program + textwrap.dedent(
             """\
@@ -145,7 +145,7 @@ def generate_awg_program(array, awgModule, use = 'primary', trigger = '4', trigg
         awg_program = awg_program + textwrap.dedent(
         """\
         setTrigger(""" + marker_binary + """);
-        wait(""" + seq_clock_offset + """);
+        wait(""" + str(seq_clk_offset) + """);
         setTrigger(0);
         """
         )
@@ -178,7 +178,6 @@ def generate_awg_program(array, awgModule, use = 'primary', trigger = '4', trigg
                 }
                 """
             )
-    # print(awg_program)
     return awg_program
 
 def run_awg_program(daq, device, awgModule, awg_program):

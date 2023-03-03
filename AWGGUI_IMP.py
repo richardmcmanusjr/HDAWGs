@@ -30,11 +30,10 @@ trigger = triggers[4] # Default trigger is 'None'
 triggerChannels = [1,2,3,4,5,6,7,8] # List of trigger channels
 trigger_channel = triggerChannels[0] # Default Trigger Channel is 1
 units = ['GHz', 'MHz', 'kHz', 'Hz'] # List of frequency units
-sample_clk_offset_time = 3.4e-9 #Offset to account for discrete number of HDAWG Sequencer Clock Cycles
-seq_clk_offset_time = 45*3.3e-9
-
-firstTime = True
 sampleRate = 2.4e9
+sample_clk_offset_time = 3.7e-9 #Offset to account for discrete number of HDAWG Sequencer Clock Cycles
+seq_clk_offset_time = 46*3.3e-9
+firstTime = True
 
 def create_plot(array): # Function that generates preview plot from 2D array using matplotlib.pyplot
     numCols = len(array[0]) # Number of waves to be plotted
@@ -114,14 +113,14 @@ def compute_sample_clk_offset(sampleRate): # Computes number of sample clock cyc
     global sample_clk_offset_time
     sample_clk_offset_time = values['-SAMPLE CLOCK OFFSET-']
     delta_t = 1/sampleRate
-    sample_clock_offset = sample_clk_offset_time/delta_t
-    return sample_clock_offset
+    sample_clk_offset = sample_clk_offset_time/delta_t
+    return int(sample_clk_offset)
 
 def compute_seq_clk_offset(): # Computes number of sequence clock cycles to offset second AWG for sync
     global seq_clk_offset_time
     seq_clk_offset_time = values['-SEQUENCE CLOCK OFFSET-']
     seq_clk_offset = seq_clk_offset_time/(3.3e-9) # Sequence clock time base is 3.3e-9
-    return seq_clk_offset
+    return int(seq_clk_offset)
 
 def draw_figure(canvas, figure): # Initializes figure for plot
     figure_canvas_agg = FigureCanvasTkAgg(figure, canvas)
@@ -379,8 +378,10 @@ while True:
                     print('Interpolating Waveform Array...')   
                     window.refresh() 
                     array = create_interp_array(filename,compute_frequency(frequency),compute_sample_rate())
-                    sample_clock_offset = compute_sample_clk_offset(sampleRate)
+                    sample_clk_offset = compute_sample_clk_offset(sampleRate)
                     seq_clk_offset = compute_seq_clk_offset()
+                    print(sample_clk_offset)
+                    print(seq_clk_offset)
                     primary_daq, primary_device = hdawg.configure_api(primary_device_id)    # Establish connection to local server Zurich LabOne API
                     window.refresh()
                     channel_grouping = 2    # Initialize channel grouping to 1 x 8 (cores x channels)
@@ -398,7 +399,7 @@ while True:
                             print('Generating sequence for ' + secondary_device)
                             window.refresh()                            
                             secondary_awg_program = hdawg.generate_awg_program(array, secondary_awgModule, use = 'secondary', # Generate program for single HDAWG
-                                trigger = sync_trigger, trigger_channel = sync_trigger_channel, count = wave_count, sample_clock_offset = sample_clock_offset)
+                                trigger = sync_trigger, trigger_channel = sync_trigger_channel, count = wave_count, sample_clk_offset = sample_clk_offset)
                             hdawg.run_awg_program(secondary_daq, secondary_device, secondary_awgModule, secondary_awg_program)  # Program single HDAWG with awg program
                             window.refresh()
                     if primary_daq != None:
@@ -411,7 +412,7 @@ while True:
                         print('Generating sequence for ' + primary_device)
                         window.refresh()                        
                         primary_awg_program = hdawg.generate_awg_program(array, primary_awgModule, use = 'primary', # Generate program for single HDAWG
-                            trigger = enable_trigger, trigger_channel = enable_trigger_channel, marker = sync_trigger_channel, count = wave_count, seq_clock_offset=seq_clk_offset)
+                            trigger = enable_trigger, trigger_channel = enable_trigger_channel, marker = sync_trigger_channel, count = wave_count, seq_clk_offset=seq_clk_offset)
                         hdawg.run_awg_program(primary_daq, primary_device, primary_awgModule, primary_awg_program)  # Program single HDAWG with awg program
                         window.refresh()
                     window["-PROGRAM-"].update('Reset!', button_color = 'white on red') # Switch button to 'Reset!'
@@ -426,7 +427,8 @@ while True:
                 window.refresh()
             window["-PROGRAM-"].update('Program', button_color = 'white on green')    # Switch button to 'Program'
             window["-PROGRAM PROMPT-"].update('')
-            window["-ENABLE-"].update(visible=False) # Show Enable Button
+            window["-ENABLE-"].update('Enable Output', button_color = 'white on green', visible=False) # Switch button to 'Enable Output!'
+            window["-ENABLE PROMPT-"].update('')
 
         #sg.popup('Error Generating Waveforms!', 'AWG with Device ID, ' + primary_device_id + ', did not connect.', 'Please Try Again.')
     
