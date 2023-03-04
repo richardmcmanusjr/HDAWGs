@@ -471,6 +471,10 @@ while True:
                 window["-ENABLE-"].update('Enable Output', button_color = 'white on green') # Switch button to 'Enable Output!'
                 window["-ENABLE PROMPT-"].update('')
 
+    if hdawg.awg_waveform_playing(primary_daq, primary_device) != 1 and window["-ENABLE-"].get_text() == 'Disable Output!':
+        window["-ENABLE-"].update('Enable Output', button_color = 'white on green') # Switch button to 'Enable Output!'
+        window["-ENABLE PROMPT-"].update('')
+
     if event == "-FILE LIST-":  # A file was chosen from the listbox
         if bool(values["-FILE LIST-"]):
             filename = os.path.join(    # Specify chosen file

@@ -231,4 +231,7 @@ def awg_reset(daq, device):
     exp_setting = [["/%s/AWGS/0/RESET" % device, 1]]
     set_awg_settings(daq, exp_setting)
     print("Device %s program cleared" % device)
+
+def awg_waveform_playing(daq, device):
+    daq.getInt(f"/{device}/AWGS/n/WAVEFORM/PLAYING")
     
