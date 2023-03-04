@@ -223,6 +223,9 @@ def awg_enable(daq, device):
     daq.setInt(f"/{device}/awgs/0/enable", 1)
     print('Device ' + device + ' enabled.')
 
+def awg_get_enable(awgModule):
+    return awgModule.getInt("awg/enable")
+
 def awg_disable(daq, device):
     daq.setInt(f"/{device}/awgs/0/enable", 0)
     print('Device ' + device + ' disabled.')
@@ -233,5 +236,5 @@ def awg_reset(daq, device):
     print("Device %s program cleared" % device)
 
 def awg_waveform_playing(daq, device):
-    daq.getInt(f"/{device}/AWGS/n/WAVEFORM/PLAYING")
+    return daq.getInt("/{device}/AWGS/n/WAVEFORM/PLAYING")
     

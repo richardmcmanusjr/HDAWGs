@@ -297,12 +297,14 @@ aliasingFlag = False
 waveCountFlag = False
 primary_daq = None
 primary_device = None
+primary_awgModule = None
 secondary_daq = None
 secondary_device = None
 
 # Run the Event Loop
 while True:
-    event, values = window.read() # Read values from window
+
+    event, values = window.read(timeout = 100) # Read values from window
     if event == "Exit" or event == sg.WIN_CLOSED:
         break
 
@@ -461,6 +463,7 @@ while True:
                     window.refresh()
                 window["-ENABLE-"].update('Disable Output!', button_color = 'white on red') # Switch button to 'Disable Output!'
                 window["-ENABLE PROMPT-"].update('Output Enabled.')
+                time.sleep(0.2)
             else:
                 if secondary_daq != None:
                     hdawg.awg_disable(secondary_daq, secondary_device) 
@@ -470,10 +473,13 @@ while True:
                     window.refresh()
                 window["-ENABLE-"].update('Enable Output', button_color = 'white on green') # Switch button to 'Enable Output!'
                 window["-ENABLE PROMPT-"].update('')
-
-    if hdawg.awg_waveform_playing(primary_daq, primary_device) != 1 and window["-ENABLE-"].get_text() == 'Disable Output!':
-        window["-ENABLE-"].update('Enable Output', button_color = 'white on green') # Switch button to 'Enable Output!'
-        window["-ENABLE PROMPT-"].update('')
+                
+    if primary_awgModule != None and window["-PROGRAM-"].get_text() != 'Program':
+       if hdawg.awg_get_enable(primary_awgModule) != 1 and window["-ENABLE-"].get_text() != 'Enable Output':
+            print("Sequence Complete")
+            window.refresh()
+            window["-ENABLE-"].update('Enable Output', button_color = 'white on green') # Switch button to 'Enable Output!'
+            window["-ENABLE PROMPT-"].update('')
 
     if event == "-FILE LIST-":  # A file was chosen from the listbox
         if bool(values["-FILE LIST-"]):
