@@ -31,7 +31,7 @@ triggerChannels = [1,2,3,4,5,6,7,8] # List of trigger channels
 trigger_channel = triggerChannels[0] # Default Trigger Channel is 1
 units = ['GHz', 'MHz', 'kHz', 'Hz'] # List of frequency units
 sampleRate = 2.4e9
-sample_clk_offset_time = 8/sampleRate #Offset to account for discrete number of HDAWG Sequencer Clock Cycles
+sample_clk_offset_time = 4/sampleRate #Offset to account for discrete number of HDAWG Sequencer Clock Cycles
 seq_clk_offset_time = 46/(sampleRate/8) # Sequence Clock Frequency is sampleRate/8
 firstTime = True
 
