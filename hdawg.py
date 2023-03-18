@@ -134,6 +134,7 @@ def generate_awg_program(array, awgModule, use = 'primary', trigger = '4', trigg
     if trigger >= 0 and trigger < 4:
         awg_program = awg_program + textwrap.dedent(
             """\
+            while(run){
             waitDigTrigger(""" + str(trigger_channel) + """);
             """
         )
@@ -177,6 +178,12 @@ def generate_awg_program(array, awgModule, use = 'primary', trigger = '4', trigg
                 """\
                 }
                 """
+            )
+    if trigger >= 0 and trigger < 4:
+        awg_program = awg_program + textwrap.dedent(
+            """\
+            }
+            """
             )
     return awg_program
 
