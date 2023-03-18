@@ -22,7 +22,7 @@ deviceIds = ['dev8310', 'dev8259'] # HDAWG serial numbers
 secondaryDeviceIds = ['dev8310', 'dev8259', 'None'] # HDAWG serial numbers
 sampleRates = ['2.4 Gsps','1.2 Gsps','600 Msps','300 Msps','150 Msps', '100 Msps'] # Minimum Sample Rate is 100 Msps; Sample Rates do not need to be discrete
 primary_device_id = deviceIds[0]
-secondary_device_id = secondaryDeviceIds[2] # Set one device to default
+secondary_device_id = secondaryDeviceIds[1] # Set one device to default
 waveCounts = ['Infinite'] 
 wave_count = waveCounts[0] # Set default waveCounts to infinite, can specify integer number of waves in GUI
 triggers = ['Level','Rising','Falling','Both','None'] # Triggers defined in HDAWG Manual, index is used to set node
@@ -176,7 +176,7 @@ file_list_column = [    # Left half of GUI structure
             ],
             [sg.Combo(
                 secondaryDeviceIds, enable_events=True, size=(15,1),readonly=True,
-                default_value=secondaryDeviceIds[2], key="-SECONDARY DEVICE ID-")
+                default_value=secondaryDeviceIds[1], key="-SECONDARY DEVICE ID-")
             ],
             [sg.Combo(
                 waveCounts, enable_events=True, size=(15,1),
@@ -225,6 +225,23 @@ plot_column = [
     [sg.Output(size=(100, 10))]
 ]
 
+primary_sequence_column = [
+        [sg.Text(primary_device_id, enable_events=True, size=(10,1),
+            font = ("Helvetica", 20), key="-PRIMARY SEQUENCE LABEL-", expand_x = True, justification = 'center')],
+        [sg.HSeparator()],
+        [sg.Text(enable_events=True, size=(60,40),
+            background_color='#1E2125', key="-PRIMARY SEQUENCE-", justification = 'left')]          
+]
+
+secondary_sequence_column = [
+        [sg.Text(secondary_device_id, enable_events=True, size=(10,1),
+            font = ("Helvetica", 20), key="-SECONDARY SEQUENCE LABEL-", expand_x = True, justification = 'center')],
+        [sg.HSeparator()],
+        [sg.Text(enable_events=True, size=(60,40),
+            background_color='#1E2125', key="-SECONDARY SEQUENCE-", justification = 'left')]          
+]
+
+
 settings_column = [
     [sg.Text("", size=(10,2))],
     [sg.Text("Settings", size=(10,1), font = ("Helvetica", 30), expand_x = True, justification = 'center')],
@@ -267,9 +284,19 @@ tab1_layout = [
 
 tab2_layout = [  
     [
+        sg.Column(primary_sequence_column, element_justification='center'),
+        sg.VSeperator(),
+        sg.Column(secondary_sequence_column, element_justification='center')
+    ]
+]
+
+tab3_layout = [  
+    [
         sg.Column(settings_column, element_justification='center')
     ]
 ]
+
+
 
 # ----- Full layout -----
 layout = [
@@ -277,7 +304,8 @@ layout = [
         sg.TabGroup([
             [
                 sg.Tab('Control Panel', tab1_layout),
-                sg.Tab('Settings', tab2_layout, element_justification='center')
+                sg.Tab('Sequences', tab2_layout, element_justification='center'),
+                sg.Tab('Settings', tab3_layout, element_justification='center')
             ]
         ])
     ]
@@ -326,10 +354,12 @@ while True:
         window["-FILE LIST-"].update(fnames)
 
     if event == "-PRIMARY DEVICE ID-":
-        primary_device_id = values["-PRIMARY DEVICE ID-"] 
+        primary_device_id = values["-PRIMARY DEVICE ID-"]
+        window["-PRIMARY SEQUENCE LABEL-"].update(primary_device_id)
     
     if event == "-SECONDARY DEVICE ID-":
         secondary_device_id = values["-SECONDARY DEVICE ID-"]
+        window["-SECONDARY SEQUENCE LABEL-"].update(secondary_device_id)
     
     if event == "-WAVE COUNT-":
         wave_count = compute_wave_count(wave_count)
@@ -416,6 +446,7 @@ while True:
                             window.refresh()                            
                             secondary_awg_program = hdawg.generate_awg_program(array, secondary_awgModule, use = 'secondary', # Generate program for single HDAWG
                                 trigger = sync_trigger, trigger_channel = sync_trigger_channel, count = wave_count, sample_clk_offset = sample_clk_offset)
+                            window["-SECONDARY SEQUENCE-"].update(secondary_awg_program)
                             hdawg.run_awg_program(secondary_daq, secondary_device, secondary_awgModule, secondary_awg_program)  # Program single HDAWG with awg program
                             window.refresh()
                     if primary_daq != None:
@@ -429,6 +460,7 @@ while True:
                         window.refresh()                        
                         primary_awg_program = hdawg.generate_awg_program(array, primary_awgModule, use = 'primary', # Generate program for single HDAWG
                             trigger = enable_trigger, trigger_channel = enable_trigger_channel, marker = sync_trigger_channel, count = wave_count, seq_clk_offset=seq_clk_offset)
+                        window["-PRIMARY SEQUENCE-"].update(primary_awg_program)
                         hdawg.run_awg_program(primary_daq, primary_device, primary_awgModule, primary_awg_program)  # Program single HDAWG with awg program
                         window.refresh()
                     window["-PROGRAM-"].update('Reset!', button_color = 'white on red') # Switch button to 'Reset!'
@@ -437,10 +469,12 @@ while True:
             
         else:
             hdawg.awg_reset(primary_daq, primary_device)    # Turn off enable 
+            window["-PRIMARY SEQUENCE-"].update('')
             window.refresh()
             if secondary_daq != None:
                 hdawg.awg_reset(secondary_daq, secondary_device)    # Turn off enable
                 window.refresh()
+                window["-SECONDARY SEQUENCE-"].update('')
             window["-PROGRAM-"].update('Program', button_color = 'white on green')    # Switch button to 'Program'
             window["-PROGRAM PROMPT-"].update('')
             window["-ENABLE-"].update('Enable Output', button_color = 'white on green', visible=False) # Switch button to 'Enable Output!'

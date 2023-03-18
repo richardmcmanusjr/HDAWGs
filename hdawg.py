@@ -58,7 +58,8 @@ def generate_settings(
         ["/%s/awgs/0/userregs/0" % device, 0],
         ["/%s/system/clocks/sampleclock/freq" % device, sampleRate],
         ["/%s/system/clocks/referenceclock/source" % device, reference_clock_source],
-        ["/%s/system/awg/channelgrouping" % device, channel_grouping]
+        ["/%s/system/awg/channelgrouping" % device, channel_grouping],
+        ["/%s/triggers/out/0/delay" % device , 0]
     ]
 
     if trigger >= 0 and trigger < 4:
