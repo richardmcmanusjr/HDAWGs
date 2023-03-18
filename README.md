@@ -1,5 +1,5 @@
 # HDAWGs
-A python GUI that utilizes Zurich Instruments's LabOne Python API to remotely synchronize and program two HDAWG8s using a single .CSV waveform file.
+A python GUI that utilizes Zurich Instruments's LabOne Python API to remotely synchronize and program two HDAWG8s from a single .CSV waveform file.
 
 ## Control Panel
 
