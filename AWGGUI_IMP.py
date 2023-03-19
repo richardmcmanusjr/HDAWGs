@@ -227,9 +227,9 @@ plot_column = [
 
 primary_sequence_column = [
         [
-            sg.Text('Primary: ', size=(5,1), font = ("Helvetica", 20), expand_x = True, justification = 'right'),
+            sg.Text('Primary: ', size=(5,1), font = ("Helvetica", 15), expand_x = True, justification = 'right'),
             sg.Text(primary_device_id, enable_events=True, size=(5,1),
-                font = ("Helvetica", 20), key="-PRIMARY SEQUENCE LABEL-", expand_x = True, justification = 'left')
+                font = ("Helvetica", 15), key="-PRIMARY SEQUENCE LABEL-", expand_x = True, justification = 'left')
         ],
         [sg.HSeparator()],
         [sg.Text(enable_events=True, size=(60,40),
@@ -238,9 +238,9 @@ primary_sequence_column = [
 
 secondary_sequence_column = [
         [
-            sg.Text('Secondary: ', size=(5,1), font = ("Helvetica", 20), expand_x = True, justification = 'right'),
+            sg.Text('Secondary: ', size=(5,1), font = ("Helvetica", 15), expand_x = True, justification = 'right'),
             sg.Text(secondary_device_id, enable_events=True, size=(5,1),
-                font = ("Helvetica", 20), key="-SECONDARY SEQUENCE LABEL-", expand_x = True, justification = 'left')
+                font = ("Helvetica", 15), key="-SECONDARY SEQUENCE LABEL-", expand_x = True, justification = 'left')
         ],
         [sg.HSeparator()],
         [sg.Text(enable_events=True, size=(60,40),
