@@ -226,16 +226,22 @@ plot_column = [
 ]
 
 primary_sequence_column = [
-        [sg.Text(primary_device_id, enable_events=True, size=(10,1),
-            font = ("Helvetica", 20), key="-PRIMARY SEQUENCE LABEL-", expand_x = True, justification = 'center')],
+        [
+            sg.Text('Primary: ', size=(5,1), font = ("Helvetica", 20), expand_x = True, justification = 'right'),
+            sg.Text(primary_device_id, enable_events=True, size=(5,1),
+                font = ("Helvetica", 20), key="-PRIMARY SEQUENCE LABEL-", expand_x = True, justification = 'left')
+        ],
         [sg.HSeparator()],
         [sg.Text(enable_events=True, size=(60,40),
             background_color='#1E2125', key="-PRIMARY SEQUENCE-", justification = 'left')]          
 ]
 
 secondary_sequence_column = [
-        [sg.Text(secondary_device_id, enable_events=True, size=(10,1),
-            font = ("Helvetica", 20), key="-SECONDARY SEQUENCE LABEL-", expand_x = True, justification = 'center')],
+        [
+            sg.Text('Secondary: ', size=(5,1), font = ("Helvetica", 20), expand_x = True, justification = 'right'),
+            sg.Text(secondary_device_id, enable_events=True, size=(5,1),
+                font = ("Helvetica", 20), key="-SECONDARY SEQUENCE LABEL-", expand_x = True, justification = 'left')
+        ],
         [sg.HSeparator()],
         [sg.Text(enable_events=True, size=(60,40),
             background_color='#1E2125', key="-SECONDARY SEQUENCE-", justification = 'left')]          
