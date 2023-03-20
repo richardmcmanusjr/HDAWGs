@@ -33,6 +33,7 @@ units = ['GHz', 'MHz', 'kHz', 'Hz'] # List of frequency units
 sampleRate = 2.4e9
 sample_clk_offset_time = 8/sampleRate #Offset to account for discrete number of HDAWG Sequencer Clock Cycles
 seq_clk_offset_time = 46/(sampleRate/8) # Sequence Clock Frequency is sampleRate/8
+total_offset = seq_clk_offset_time - sample_clk_offset_time
 firstTime = True
 
 def create_plot(array): # Function that generates preview plot from 2D array using matplotlib.pyplot
@@ -256,7 +257,7 @@ settings_column = [
     [
         sg.Text("Total Sync Offset: ", size=(20,1), expand_x = True, justification = 'left'),
         sg.Text("Seconds: ", size=(7,1)),        
-        sg.Text(f'{seq_clk_offset_time + sample_clk_offset_time:.3e}', enable_events=True, size=(15,1),
+        sg.Text(f'{1.487e-7:.3e}', enable_events=True, size=(15,1),
             background_color='#1E2125',key="-TOTAL SYNC OFFSET-")
     ],
     [sg.HSeparator()],
@@ -394,7 +395,7 @@ while True:
     if event == "-SEQUENCE CLOCK OFFSET-" or event == "-SAMPLE CLOCK OFFSET-":
         window["-SEQUENCE CLOCK OFFSET TEXT-"].update(compute_seq_clk_offset())
         window["-SAMPLE CLOCK OFFSET TEXT-"].update(compute_sample_clk_offset(sampleRate))
-        total_offset = sample_clk_offset_time + seq_clk_offset_time
+        total_offset = seq_clk_offset_time - sample_clk_offset_time
         window["-TOTAL SYNC OFFSET-"].update(f'{total_offset:.3e}')
 
     # Programs sequence and sends to HDAWGs 
