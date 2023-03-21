@@ -38,3 +38,16 @@ A python GUI that utilizes Zurich Instruments's LabOne Python API to remotely sy
 <p align="center">
 <img src="https://github.com/richardmcmanusjr/HDAWGs/blob/main/Settings.png">
 </p>
+
+## Common Configuration
+- Front Panel
+  - Sync Trigger
+    - HDAWG 1, Mark 1 to HDAWG 2, Trig 1
+- Back Panel
+  - Reference Clock
+    - HDAWG 2, Reference Clk Out to HDAWG 1, Reference Clk In
+
+<p align="center">
+<img src="https://github.com/richardmcmanusjr/HDAWGs/blob/main/CommonConfig.png">
+</p>
+
