@@ -5,7 +5,6 @@ import zhinst.utils
 import time
 
 def rotateWave(arr,d,n):
-    print(d)
     temp_arr = arr[n-d:n]
     temp_arr = np.append(temp_arr,arr[0:n-d])
     return temp_arr
@@ -95,7 +94,6 @@ def initiate_AWG(daq, device):
     return awgModule
 
 def generate_awg_program(array, awgModule, use = 'primary', trigger = '4', trigger_channel = 1, marker = None, count = 'Infinite', seq_clk_offset = 0, sample_clk_offset = 0):
-    print(sample_clk_offset)
     data_dir = awgModule.getString("directory")
     wave_dir = os.path.join(data_dir, "awg", "waves")
     if not os.path.isdir(wave_dir):
@@ -125,7 +123,8 @@ def generate_awg_program(array, awgModule, use = 'primary', trigger = '4', trigg
         csv_file = os.path.join(wave_dir, "wave" + str(i) + ".csv")
         current_wave = array[:, i + offset]
         if sample_clk_offset != 0:
-            current_wave = rotateWave(current_wave, int(sample_clk_offset), len(current_wave))            
+            current_wave = rotateWave(current_wave, int(sample_clk_offset), len(current_wave))
+            print("Rotated Wave " + str(i) + " by " + str(sample_clk_offset) + " samples")       
         np.savetxt(csv_file, current_wave)
         awg_program = awg_program + textwrap.dedent(
             """\

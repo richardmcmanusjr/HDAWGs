@@ -31,9 +31,11 @@ triggerChannels = [1,2,3,4,5,6,7,8] # List of trigger channels
 trigger_channel = triggerChannels[0] # Default Trigger Channel is 1
 units = ['GHz', 'MHz', 'kHz', 'Hz'] # List of frequency units
 sampleRate = 2.4e9
-sample_clk_offset_time = 4/sampleRate #Offset to account for discrete number of HDAWG Sequencer Clock Cycles
-seq_clk_offset_time = 46/(sampleRate/8) # Sequence Clock Frequency is sampleRate/8
-total_offset = seq_clk_offset_time - sample_clk_offset_time
+default_sample_clk_offset = 4 # Offset to account for discrete number of HDAWG Sequencer Clock Cycles
+sample_clk_offset_time = default_sample_clk_offset/sampleRate # Translate to time in seconds
+default_seq_clk_offset = 46 # Sequence Clock Frequency is sampleRate/8
+seq_clk_offset_time = default_seq_clk_offset* 8 / sampleRate # Translate to time in seconds
+total_offset = seq_clk_offset_time + sample_clk_offset_time
 firstTime = True
 
 def create_plot(array): # Function that generates preview plot from 2D array using matplotlib.pyplot
@@ -110,17 +112,17 @@ def compute_wave_count(wave_count):
             waveCountFlag = True # Raise waveCountFlag if wave count input is not an int
     return wave_count
 
-def compute_sample_clk_offset(sampleRate): # Computes number of sample clock cycles to offset second AWG for sync
+def compute_sample_clk_offset(): # Computes number of sample clock cycles to offset second AWG for sync
     global sample_clk_offset_time
-    sample_clk_offset_time = values['-SAMPLE CLOCK OFFSET-']
-    sample_clk_offset = sample_clk_offset_time*sampleRate
-    return round(sample_clk_offset)
+    sample_clk_offset = values['-SAMPLE CLOCK OFFSET-']
+    sample_clk_offset_time = values['-SAMPLE CLOCK OFFSET-'] / sampleRate
+    return sample_clk_offset_time
 
 def compute_seq_clk_offset(): # Computes number of sequence clock cycles to offset second AWG for sync
     global seq_clk_offset_time
-    seq_clk_offset_time = values['-SEQUENCE CLOCK OFFSET-']
-    seq_clk_offset = seq_clk_offset_time*(sampleRate/8) # Sequence clock time base is sampleRate/8
-    return round(seq_clk_offset)
+    seq_clk_offset = values['-SEQUENCE CLOCK OFFSET-']
+    seq_clk_offset_time = seq_clk_offset  * 8/sampleRate # Sequence clock time base is sampleRate/8
+    return seq_clk_offset_time
 
 def draw_figure(canvas, figure): # Initializes figure for plot
     figure_canvas_agg = FigureCanvasTkAgg(figure, canvas)
@@ -257,28 +259,28 @@ settings_column = [
     [
         sg.Text("Total Sync Offset: ", size=(20,1), expand_x = True, justification = 'left'),
         sg.Text("Seconds: ", size=(7,1)),        
-        sg.Text(f'{1.487e-7:.3e}', enable_events=True, size=(15,1),
+        sg.Text(f'{total_offset:.3e}', enable_events=True, size=(15,1),
             background_color='#1E2125',key="-TOTAL SYNC OFFSET-")
     ],
     [sg.HSeparator()],
     [sg.Text("", size=(10,1))],
     [
-        sg.Text("Sample Clock Offset: ", size=(20,1), expand_x = True, justification = 'left'),
-        sg.Text("Cycles: ", size=(5,1)),
-        sg.Text(round(sample_clk_offset_time*sampleRate), enable_events=True, size=(15,1),
+        sg.Text("Sample Clock Offset:", size=(20,1), expand_x = True, justification = 'left'),
+        sg.Text("Seconds: ", size=(7,1)),
+        sg.Text(f'{sample_clk_offset_time:.3e}', enable_events=True, size=(15,1),
             background_color='#1E2125', key="-SAMPLE CLOCK OFFSET TEXT-")
     ],
     [sg.Text("", size=(10,1))],
-    [sg.Slider(key="-SAMPLE CLOCK OFFSET-", enable_events=True, size=(40,9), range=(0, 10e-9), default_value = sample_clk_offset_time, resolution = 1/sampleRate, orientation = 'horizontal')],
+    [sg.Slider(key="-SAMPLE CLOCK OFFSET-", enable_events=True, size=(40,9), range=(0, round(10e-9/(1/sampleRate))), default_value = default_sample_clk_offset, resolution = 1, orientation = 'horizontal')],
     [sg.Text("", size=(10,1))],
     [
-        sg.Text("Sequence Clock Offset: ", size=(20,1), expand_x = True, justification = 'left'),
-        sg.Text("Cycles: ", size=(5,1)),
-        sg.Text(round(seq_clk_offset_time*(sampleRate/8)), enable_events=True, size=(15,1),
+        sg.Text("Sequence Clock Offset:", size=(20,1), expand_x = True, justification = 'left'),
+        sg.Text("Seconds: ", size=(7,1)),
+        sg.Text(f'{seq_clk_offset_time:.3e}', enable_events=True, size=(15,1),
             background_color='#1E2125', key="-SEQUENCE CLOCK OFFSET TEXT-")
     ],
     [sg.Text("", size=(10,1))],
-    [sg.Slider(key="-SEQUENCE CLOCK OFFSET-", enable_events=True, size=(40,9), range=(0, 200e-9), default_value = seq_clk_offset_time, resolution = 3.3e-9, orientation = 'horizontal')]
+    [sg.Slider(key="-SEQUENCE CLOCK OFFSET-", enable_events=True, size=(40,9), range=(0, round(200e-9*sampleRate/8)), default_value = default_seq_clk_offset, resolution = 1, orientation = 'horizontal')]
 ]
 
 tab1_layout = [  
@@ -393,9 +395,9 @@ while True:
                 sg.popup('Select File.', 'File must be selected to update graph.')
         
     if event == "-SEQUENCE CLOCK OFFSET-" or event == "-SAMPLE CLOCK OFFSET-":
-        window["-SEQUENCE CLOCK OFFSET TEXT-"].update(compute_seq_clk_offset())
-        window["-SAMPLE CLOCK OFFSET TEXT-"].update(compute_sample_clk_offset(sampleRate))
-        total_offset = seq_clk_offset_time - sample_clk_offset_time
+        window["-SEQUENCE CLOCK OFFSET TEXT-"].update(f'{compute_seq_clk_offset():.3e}')
+        window["-SAMPLE CLOCK OFFSET TEXT-"].update(f'{compute_sample_clk_offset():.3e}')
+        total_offset = seq_clk_offset_time + sample_clk_offset_time
         window["-TOTAL SYNC OFFSET-"].update(f'{total_offset:.3e}')
 
     # Programs sequence and sends to HDAWGs 
@@ -433,8 +435,8 @@ while True:
                     print('Interpolating Waveform Array...')   
                     window.refresh() 
                     array = create_interp_array(filename,compute_frequency(frequency),compute_sample_rate())
-                    sample_clk_offset = compute_sample_clk_offset(sampleRate)
-                    seq_clk_offset = compute_seq_clk_offset()
+                    sample_clk_offset = int(values['-SAMPLE CLOCK OFFSET-'])
+                    seq_clk_offset = int(values['-SEQUENCE CLOCK OFFSET-'])
                     primary_daq, primary_device = hdawg.configure_api(primary_device_id)    # Establish connection to local server Zurich LabOne API
                     window.refresh()
                     channel_grouping = 2    # Initialize channel grouping to 1 x 8 (cores x channels)
