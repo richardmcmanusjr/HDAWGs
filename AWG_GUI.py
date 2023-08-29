@@ -338,6 +338,17 @@ primary_awgModule = None
 secondary_daq = None
 secondary_device = None
 
+# Specify path
+path = os.path.join(os.getcwd(), 'Waves')
+
+# Check whether the specified
+# path exists or not
+pathExists = os.path.exists(path)
+
+if pathExists:
+    window["-FOLDER-"].update(path)
+    window.write_event_value("-FOLDER-", path)
+    
 # Run the Event Loop
 while True:
 
