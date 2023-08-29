@@ -31,7 +31,7 @@ triggerChannels = [1,2,3,4,5,6,7,8] # List of trigger channels
 trigger_channel = triggerChannels[0] # Default Trigger Channel is 1
 units = ['GHz', 'MHz', 'kHz', 'Hz'] # List of frequency units
 sampleRate = 2.4e9
-sample_clk_offset_time = 8/sampleRate #Offset to account for discrete number of HDAWG Sequencer Clock Cycles
+sample_clk_offset_time = 4/sampleRate #Offset to account for discrete number of HDAWG Sequencer Clock Cycles
 seq_clk_offset_time = 46/(sampleRate/8) # Sequence Clock Frequency is sampleRate/8
 total_offset = seq_clk_offset_time - sample_clk_offset_time
 firstTime = True
@@ -452,7 +452,7 @@ while True:
                             print('Generating sequence for ' + secondary_device)
                             window.refresh()                            
                             secondary_awg_program = hdawg.generate_awg_program(array, secondary_awgModule, use = 'secondary', # Generate program for single HDAWG
-                                trigger = sync_trigger, trigger_channel = sync_trigger_channel, count = wave_count, sample_clk_offset = sample_clk_offset)
+                                trigger = sync_trigger, trigger_channel = sync_trigger_channel, count = wave_count)
                             window["-SECONDARY SEQUENCE-"].update(secondary_awg_program)
                             hdawg.run_awg_program(secondary_daq, secondary_device, secondary_awgModule, secondary_awg_program)  # Program single HDAWG with awg program
                             window.refresh()
@@ -466,7 +466,7 @@ while True:
                         print('Generating sequence for ' + primary_device)
                         window.refresh()                        
                         primary_awg_program = hdawg.generate_awg_program(array, primary_awgModule, use = 'primary', # Generate program for single HDAWG
-                            trigger = enable_trigger, trigger_channel = enable_trigger_channel, marker = sync_trigger_channel, count = wave_count, seq_clk_offset=seq_clk_offset)
+                            trigger = enable_trigger, trigger_channel = enable_trigger_channel, marker = sync_trigger_channel, count = wave_count, seq_clk_offset=seq_clk_offset, sample_clk_offset = sample_clk_offset)
                         window["-PRIMARY SEQUENCE-"].update(primary_awg_program)
                         hdawg.run_awg_program(primary_daq, primary_device, primary_awgModule, primary_awg_program)  # Program single HDAWG with awg program
                         window.refresh()
