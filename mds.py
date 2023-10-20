@@ -1,8 +1,67 @@
 import textwrap
 import numpy as np
 import os
+import zhinst.core
 import zhinst.utils
 import time
+
+def configure_api(
+    server_host: str = 'localhost',
+    server_port: int = 8004,
+    apilevel: int = 6
+):
+    try:
+        # Settings
+        # Call a zhinst utility function that returns:
+        # - an API session `daq` in order to communicate with devices via the data server.
+        # - the device ID string that specifies the device branch in the server's node hierarchy.
+        # - the device's discovery properties.
+        daq = zhinst.core.ziDAQServer(server_host, server_port, apilevel)
+        return daq
+    except:
+        return None
+
+def generate_settings(
+    device, array, sampleRate, use = 'primary', awg_range = 1.2, 
+    amplitude = 1.2, trigger = 4, trigger_channel = 1, channel_grouping = -1
+):
+    numCols = int(len(array[0])) # 2 columns in your example
+    
+    reference_clock_source = 1
+
+    exp_setting = [
+        ["/%s/awgs/0/outputs/0/modulation/mode" % device, 0],
+        ["/%s/awgs/0/time" % device, 0],
+        ["/%s/awgs/0/userregs/0" % device, 0],
+        ["/%s/system/clocks/sampleclock/freq" % device, sampleRate],
+        ["/%s/system/clocks/referenceclock/source" % device, reference_clock_source],
+        ["/%s/system/awg/channelgrouping" % device, channel_grouping],
+        ["/%s/triggers/out/0/delay" % device , 0]
+    ]
+
+    if trigger >= 0 and trigger < 4:
+        exp_setting.append(["/%s/awgs/0/auxtriggers/0/channel" % device, trigger_channel - 1])
+        exp_setting.append(["/%s/awgs/0/auxtriggers/0/slope" % device, trigger])
+
+    if use == 'primary':
+        for i in range(min(numCols,8)):
+            exp_setting.append(["/%s/sigouts/%d/on" % (device, i), 1])
+            exp_setting.append(["/%s/sigouts/%d/range" % (device, i), awg_range])
+            exp_setting.append(["/%s/awgs/0/outputs/%d/amplitude" % (device, i), amplitude])
+
+    if use != 'primary' and numCols > 8:
+        for i in range(min(numCols - 8, 16)):
+            exp_setting.append(["/%s/sigouts/%d/on" % (device, i), 1])
+            exp_setting.append(["/%s/sigouts/%d/range" % (device, i), awg_range])
+            exp_setting.append(["/%s/awgs/0/outputs/%d/amplitude" % (device, i), amplitude])
+    # print(exp_setting)
+    #  generate_settings('dev8259',[[0,1,2,3]],100)
+    return exp_setting
+
+def set_awg_settings(daq, exp_setting):
+    daq.set(exp_setting)
+    # Ensure that all settings have taken effect on the device before continuing.
+    daq.sync()
 
 def initiate_mds(daq, device_1, device_2):
     mds = daq.multiDeviceSyncModule()
@@ -34,7 +93,7 @@ def initiate_mds(daq, device_1, device_2):
     time.sleep(0.2)
     return mds
 
-def generate_mds_program(array, mds, awgModule, trigger = '4', trigger_channel = 1, count = 'Infinite'):
+def generate_mds_program(array, awgModule, trigger = 4, trigger_channel = 1, count = 'Infinite'):
     data_dir = awgModule.getString("directory")
     wave_dir = os.path.join(data_dir, "awg", "waves")
     if not os.path.isdir(wave_dir):
@@ -68,34 +127,34 @@ def generate_mds_program(array, mds, awgModule, trigger = '4', trigger_channel =
             """
         )
 
-    if count == "Infinite":
-        mds_program = mds_program + textwrap.dedent(
-            """\
-            while(run){
-            playWave("""
-        )
-    else:
-        mds_program = mds_program + textwrap.dedent(
-            """\
-            repeat(""" + str(count) + """){
-            playWave("""
-        )
-    for i in range(1, numCols + 1):
-        if i != numCols:
-            mds_program = mds_program + textwrap.dedent(
-                str(i) + ", w" + str(i) + ", "
-            )
+    # if count == "Infinite":
+    #     mds_program = mds_program + textwrap.dedent(
+    #         """\
+    #         while(run){
+    #         playWave("""
+    #     )
+    # else:
+    #     mds_program = mds_program + textwrap.dedent(
+    #         """\
+    #         repeat(""" + str(count) + """){
+    #         playWave("""
+    #     )
+    # for i in range(1, numCols + 1):
+    #     if i != numCols:
+    #         mds_program = mds_program + textwrap.dedent(
+    #             str(i) + ", w" + str(i) + ", "
+    #         )
 
-        else:
-            mds_program = mds_program + textwrap.dedent(
-                str(i) + ", w" + str(i) + """);
-                """
-            )
-            mds_program = mds_program + textwrap.dedent(
-                """\
-                }
-                """
-            )
+    #     else:
+    #         mds_program = mds_program + textwrap.dedent(
+    #             str(i) + ", w" + str(i) + """);
+    #             """
+    #         )
+    #         mds_program = mds_program + textwrap.dedent(
+    #             """\
+    #             }
+    #             """
+    #         )
     # print(mds_program)
     return mds_program
 

@@ -1,6 +1,7 @@
 import textwrap
 import numpy as np
 import os
+import zhinst.core
 import zhinst.utils
 import time
 
@@ -11,34 +12,20 @@ def rotateWave(arr,d,n):
 
 def configure_api(
     device_id,
-    server_host: str = "localhost",
+    server_host: str = 'localhost',
     server_port: int = 8004,
+    apilevel: int = 6
 ):
     try:
         # Settings
-        apilevel = 6  # The API level supported by this example.
         # Call a zhinst utility function that returns:
         # - an API session `daq` in order to communicate with devices via the data server.
         # - the device ID string that specifies the device branch in the server's node hierarchy.
         # - the device's discovery properties.
-        (daq, device, _) = zhinst.utils.create_api_session(
-            device_id, apilevel, server_host=server_host, server_port=server_port
-        )
-        zhinst.utils.api_server_version_check(daq)
-
-        # Create a base configuration: Disable all available outputs, awgs, demods, scopes,...
-        zhinst.utils.disable_everything(daq, device)
-
-        # 'system/awg/channelgrouping' : Configure how many independent sequencers
-        #   should run on the AWG and how the outputs are grouped by sequencer.
-        #   0 : 4x2 with HDAWG8; 2x2 with HDAWG4.
-        #   1 : 2x4 with HDAWG8; 1x4 with HDAWG4.
-        #   2 : 1x8 with HDAWG8.
-        # Configure the HDAWG to use one sequencer for each pair of output channels
-        daq.setInt(f"/{device}/system/awg/channelgrouping", 2)
-
-        return daq, device
+        daq = zhinst.core.ziDAQServer(server_host, server_port, apilevel)
+        return daq, device_id
     except:
+        
         return None, None
 
 def generate_settings(
